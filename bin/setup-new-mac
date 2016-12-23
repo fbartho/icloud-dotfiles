@@ -31,7 +31,7 @@ fi
 ## link .ssh config
 mkdir -p "$HOME/.ssh"
 cd "$HOME/.ssh"
-[ ! -L config ] && ln -s ../.icloud-drive/dotfiles/.ssh/config .
+[ ! -L config ] && ln -s "$HOME/.icloud-drive/dotfiles/.ssh/config" .
 cd ..
 
 # Set macOS default hidden settings
