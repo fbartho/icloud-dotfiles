@@ -1,0 +1,15 @@
+#!/bin/bash
+
+cd ~/Library/Application\ Support/MobileSync/Backup
+backup=`ls -t1 | sed -n '1p'` # most recent backup
+for f in "$backup"/*.mdinfo; do
+grep -q "Library/AddressBook/AddressBook.sqlitedb" $f
+    if [ $? -eq 0 ]; then
+addressbook=`basename $f .mdinfo`
+        cp -v "`pwd`/$backup/$addressbook.mddata" ~/Library/Application\ Support/iPhone\ Simulator/User/Library/AddressBook/AddressBook.sqlitedb
+        exit $?
+    fi
+done
+
+echo "Address Book not found in iPhone backup" >&2
+exit 1

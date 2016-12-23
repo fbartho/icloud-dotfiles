@@ -4,20 +4,34 @@ set -e
 
 # Create symlinks from iCloud to home directory
 cd "$HOME"
-[ ! -L icloud-drive ] && ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" icloud-drive
-[ ! -L lolbrary ] && ln -s "$HOME/Library" lolbrary
-for link in .gemrc .gitconfig .gitignore_global .homebridge .profile .vim .vimrc bin; do
+[ ! -L .icloud-drive ] && ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" .icloud-drive
+export basic_links="
+.gemrc
+.gitconfig
+.gitignore_global
+.profile
+.aliases.bash
+.lldbinit
+.lldb-gdb
+.hammer
+"
+for link in $basic_links; do
   if [ -L "$HOME/$link" ]; then
     echo "Link '$link' already exists"
   else
-    ln -s "icloud-drive/dotfiles/$link" .
+    ln -s ".icloud-drive/dotfiles/$link" .
   fi
 done
+if [ -L "$HOME/.bin" ]; then
+  echo "Link '.bin' already exists"
+else
+  ln -s ".icloud-drive/dotfiles/bin" .bin
+fi
 
 ## link .ssh config
 mkdir -p "$HOME/.ssh"
 cd "$HOME/.ssh"
-[ ! -L config ] && ln -s ../icloud-drive/dotfiles/.ssh/config .
+[ ! -L config ] && ln -s ../.icloud-drive/dotfiles/.ssh/config .
 cd ..
 
 # Set macOS default hidden settings
@@ -34,7 +48,35 @@ else
 fi
 
 # Brew installations
-for pkg in bash-completion git nodenv node-build rbenv ruby-build postgresql wget tree chromedriver phantomjs; do
+export brew_basic_packages="
+alpine
+archey
+bash-completion
+bazaar
+carthage
+gd
+gdbm
+git
+gitsh
+go
+graphviz
+gti
+hub
+lynx
+markdown
+mas
+namebench
+netcat
+node
+node-build
+sqlite
+swiftlint
+transmission
+tree
+unrar
+wget
+"
+for pkg in $brew_basic_packages; do
   if brew list -1 | grep -q "^${pkg}\$"; then
     echo "Package '$pkg' is installed; updating:"
     brew upgrade "$pkg" --cleanup || true
@@ -43,33 +85,29 @@ for pkg in bash-completion git nodenv node-build rbenv ruby-build postgresql wge
   fi
 done
 
-if brew list -1 | grep -q "^universal-ctags\$"; then
-  echo "Package 'universal-ctags' is installed; updating:"
-  brew upgrade bash-completion --cleanup || true
-else
-  brew tap universal-ctags/universal-ctags
-  brew install --HEAD universal-ctags
-fi
+
 
 ## Set up node
-NODE_VERSION="6.9.2"
-if [ -d ".nodenv/versions/$NODE_VERSION" ]; then
-  echo "Node $NODE_VERSION already installed"
-else
-  nodenv install "$NODE_VERSION"
-fi
-eval "$(nodenv init -)"
-nodenv global "$NODE_VERSION"
+# NODE_VERSION="6.9.2"
+# if [ -d ".nodenv/versions/$NODE_VERSION" ]; then
+#   echo "Node $NODE_VERSION already installed"
+# else
+#   nodenv install "$NODE_VERSION"
+# fi
+# eval "$(nodenv init -)"
+# nodenv global "$NODE_VERSION"
 
 ## Set up ruby
-RUBY_VERSION="2.3.3"
-if [ -d ".rbenv/versions/$RUBY_VERSION" ]; then
-  echo "Ruby $RUBY_VERSION already installed"
-else
-  rbenv install "$RUBY_VERSION"
-fi
-eval "$(rbenv init -)"
-rbenv global "$RUBY_VERSION"
+#RUBY_VERSION="2.3.3"
+# if [ -d ".rbenv/versions/$RUBY_VERSION" ]; then
+#   echo "Ruby $RUBY_VERSION already installed"
+# else
+#   rbenv install "$RUBY_VERSION"
+# fi
+# eval "$(rbenv init -)"
+# rbenv global "$RUBY_VERSION"
+# sudo if system ruby
+sudo
 gem install bundler
 
 # Mount secure dotfiles
@@ -77,8 +115,54 @@ if [ -d /Volumes/secure-dotfiles ]; then
   echo "Secure dotfiles already mounted"
 else
   echo "Mounting secure dotfiles"
-  open icloud-drive/dotfiles/secure.dmg
+  open .icloud-drive/dotfiles/secure.dmg
 fi
+
+# Install some apps
+# 803453959 Slack (2.3.4)
+# 557168941 Tweetbot (2.4.5)
+# 497799835 Xcode (8.2.1)
+# 410628904 Wunderlist (3.4.5)
+# 891953906 Buffer (1.2)
+# 417602904 CloudApp (4.1.1)
+# 409183694 Keynote (7.0.5)
+# 409201541 Pages (6.0.5)
+# 409203825 Numbers (4.0.5)
+# 409183694 Keynote (7.0.5)
+# 405399194 Kindle (1.12.4)
+# 425424353 The Unarchiver (3.11.1)
+# 890031187 Marked 2 (2.5.9)
+# 992076693 MindNode (2.4.4)
+# 635758264 Calca (1.3)
+# 847496013 Deckset (1.6.3)
+# 441418898 Forage (1.0.2)
+export preinstall_apps="
+803453959
+557168941
+497799835
+410628904
+891953906
+417602904
+409183694
+409201541
+409203825
+409183694
+405399194
+425424353
+890031187
+992076693
+635758264
+847496013
+441418898
+"
+for pkg in $preinstall_apps; do
+  if mas list | grep -q "${pkg}"; then
+    echo "Package '$pkg' is installed; updating:"
+    mas upgrade "$pkg" || true
+  else
+    mas install "$pkg"
+  fi
+done
 
 # Run profile
 source .profile

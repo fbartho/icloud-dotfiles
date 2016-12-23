@@ -1,0 +1,7 @@
+sudo ifconfig eth0 0.0.0.0
+sudo ifconfig usb0 0.0.0.0
+sudo brctl addbr br0
+sudo brctl addif br0 eth0
+sudo brctl addif br0 usb0
+sudo ifconfig br0 up
+sudo dhclient br0

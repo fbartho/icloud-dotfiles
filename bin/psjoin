@@ -1,0 +1,35 @@
+#!/usr/bin/env python
+
+import os, sys, re, StringIO, datetime
+import fcntl, termios, struct
+
+def functions():
+	sys.stdout.write("%!\n\
+/begin_file\n\
+{ /save_state save def  % save state of PS interpreter\n\
+	currentfile\n\
+	0 (% $$$ EOF Mark $$$) /SubFileDecode filter cvx exec % safequard against flushfile, etc.\n\
+} bind def\n\
+/end_file\n\
+{ clear cleardictstack  % clear after the file\n\
+	save_state restore    % restore the state\n\
+} bind def\n")
+
+def header():
+	print "%!PS-Adobe-2.0"
+	print "%%Title: "+str(sys.argv[1])
+	print "%%Creator: psjoin-fbartho"
+	print "%%CreationDate: "+str(datetime.date.today())
+	print "%%EndComments"
+
+def appendFile(filename):
+	print "begin_file"
+	with open(filename, 'r') as theFile:
+		sys.stdout.write(theFile.read())
+	print "% $$$ EOF Mark $$$"
+	print "end_file"
+
+header()
+functions()
+for i in range(2,len(sys.argv)):
+	appendFile(sys.argv[i])

@@ -1,0 +1,7 @@
+#!/bin/bash
+
+#echo $@
+#echo $#
+
+tLen=$#
+for (( i=0; i <= tLen; i++)); do echo sudo softwareupdate -i "${!i}"; done

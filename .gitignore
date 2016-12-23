@@ -1,4 +1,4 @@
-/.homebridge/persist
+/bin/node_modules
 /.vim/swapfiles
 /.vim/.netrwhist
 /secure.dmg

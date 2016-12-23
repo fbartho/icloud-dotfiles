@@ -1,0 +1,10 @@
+#!/usr/bin/env ruby
+
+pwd = `pwd`.chomp
+gp = `echo $GOPATH`.chomp
+remote_url_stub = `git remote get-url origin`.sub(/^git@/,'').sub(/^https:\/\//,'').sub(/:/,'/').chomp.chomp('.git')
+target_path = "#{gp}/src/#{remote_url_stub}"
+dir = File.dirname(target_path)
+cmd = "mkdir -p #{dir}; ln -s #{pwd} #{target_path}"
+puts cmd
+system cmd

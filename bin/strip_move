@@ -1,0 +1,21 @@
+#!/usr/bin/env python
+
+import os, sys, re, StringIO
+import fcntl, termios, struct
+
+boring = re.compile("^code-move(.*)$|^code-delete(.*)$|^function-move(.*)$")
+
+input = sys.stdin	
+
+while True:
+	try:
+		line = input.readline()
+	except KeyboardInterrupt:
+		break
+	
+	match = boring.match(line)
+	if not match is None:
+		continue
+	
+	sys.stdout.write(line)
+	if len(line) == 0: break

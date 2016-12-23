@@ -1,0 +1,16 @@
+#!/bin/bash
+VolumeName="Mozilla"
+
+killall firefox-bin
+ 
+# clean the cache
+#rm -rf  ~/Library/Cache/Firefox/Profiles/*/Cache/* &amp;&amp;
+ 
+# will save your modifications back to the DISK
+/usr/bin/rsync -av --delete --exclude .Trashes ~/Library/Caches/Firefox/Profiles/ ~/Library/Caches/Firefox/Profiles_/ 
+ 
+# sometimes during unmount it will say disk is in use.
+# make sure you close firefox before.
+umount /Volumes/$VolumeName
+rm -rf ~/Library/Caches/Firefox/Profiles
+mv ~/Library/Caches/Firefox/Profiles_ ~/Library/Caches/Firefox/Profiles

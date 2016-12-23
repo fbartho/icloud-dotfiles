@@ -1,0 +1,46 @@
+#!/bin/bash
+
+echo 1. Remove the configuration profiles
+sudo profiles -P | grep -v "configuration" | cut -d \  -f 4 | xargs -L1 echo sudo profiles -R -p
+
+echo 2. Remove JAMF
+sudo rm -r /Applications/Self\ Service.app
+sudo /usr/local/bin/jamf removeFramework
+sudo rm /usr/local/bin/jamf
+sudo rm /usr/local/bin/jamfAgent
+sudo rm -rf /Library/Application\ Support/JAMF
+sudo rm /Library/Caches/com.jamfsoftware.autorun
+sudo rm /etc/jamf.conf
+sudo rm /var/log/jamf.log
+sudo rm /Library/LaunchDaemons/com.jamf*
+sudo rm /Library/Preferences/com.jamf*
+
+echo 3. Uninstall Sophos Anti-Virus
+sudo /Library/Application\ Support/Sophos/opm/Installer.app/Contents/MacOS/tools/InstallationDeployer --remove
+sudo rm /Library/LaunchDaemons/com.sophos*
+sudo rm /Library/Preferences/com.sophos*
+# sudo /usr/bin/dscl . -delete "/Library/Sophos%20Anti-Virus/Keychain"
+sudo rm -rf /Library/Sophos*
+sudo rm -rf /Library/Application\ Support/Sophos/
+
+echo 4. Remove Casper/admin user accounts
+sudo /usr/bin/dscl . -delete "/Users/admin"
+sudo /usr/bin/dscl . -delete "/Users/casperadmin"
+
+echo 5. Examine files for weirdness
+sudo mate /var/root/Library/Preferences/com.apple.loginwindow.plist
+
+echo 6. Run GUI uninstaller tools
+open ~/.bin/ReflektiveUninstall.pkg
+
+echo 7. Remove Nessus/Nessus Agent if exists
+rm -rf /Library/Nessus
+rm -rf /Library/LaunchDaemons/com.tenablesecurity.nessusd.plist
+rm -rf /Library/PreferencePanes/Nessus\ Preferences.prefPane
+rm -rf /Applications/Nessus
+sudo launchctl remove com.tenablesecurity.nessusd
+
+echo 8. reset software update if necessary - JAMF could have told it to skip stuff
+sudo rm -r /Library/Preferences/com.apple.SoftwareUpdate.plist
+
+echo "You're free!!"

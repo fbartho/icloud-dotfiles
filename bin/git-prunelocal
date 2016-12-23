@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# Deletes branches that are only local, but used to have a remote branch. (Good for cleaning up merged PRs)
+git-showlocal | xargs git branch -d

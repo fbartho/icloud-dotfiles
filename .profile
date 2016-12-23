@@ -12,11 +12,8 @@ fi
 # Additional PATH configuration
 
 ## My own scripts
-PATH="$HOME/bin:$PATH"
-
-## Ruby binstubs (note: this can be exploited at untrusted working directories!)
-PATH="./bin:$PATH"
-
+PATH="$HOME/.bin:$PATH"
+PATH="/usr/local/share/npm/bin:$PATH"
 
 # Bash settings
 
@@ -32,11 +29,14 @@ fi
 # Other Customization
 
 ## Editor registration for git, etc
-export VISUAL="mvim -f"
-export EDITOR="$VISUAL"
+export EDITOR=emacs
+
+export CODE_DIR="$HOME/Code"
 
 ## Reference the location of iCloud Drive
-export ICLOUD_DRIVE="$HOME/icloud-drive"
+export ICLOUD_DRIVE="$HOME/.icloud-drive"
+
+PATH="$CODE_DIR/go_use/bin:$PATH"
 
 ## Source private (encrypted) ENV variables via automounted disk image
 source "/Volumes/secure-dotfiles/.env"
@@ -44,11 +44,14 @@ source "/Volumes/secure-dotfiles/.env"
 ## Increase limit of open file descriptors because watch processes
 ulimit -n 10000
 
-## Set a few aliases
-alias be="bundle exec"
-alias gpp="git pull --rebase && git push"
-alias gc="git commit"
+## Load aliases
+source .aliases.bash
+source `which go_use_aliases`
+source `which go_use_fixup_env`
+
+# Alias Hub as Git
+eval "$(hub alias -s)"
 
 ## load custom PS1 prompt
-source $HOME/bin/ps1
+source $HOME/.bin/ps1
 

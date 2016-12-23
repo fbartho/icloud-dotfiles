@@ -1,0 +1,9 @@
+#!/bin/bash
+for f in *.mdinfo; do
+grep -q "Library/AddressBook/AddressBook.sqlitedb" $f
+	if [ $? -eq 0 ]; then
+addressbook=`basename $f .mdinfo`
+		cp -v "`pwd`/$backup/$addressbook.mddata" ~/Library/Application\ Support/iPhone\ Simulator/4.2/Library/AddressBook/AddressBook.sqlitedb
+		exit $?
+	fi
+done	

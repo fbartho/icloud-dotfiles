@@ -1,0 +1,4 @@
+#!/bin/bash
+
+# Produces a commandline you can copy-paste that force-deletes branches that are only local, but used to have a remote branch. (Good for cleaning up merged PRs)
+git-showlocal | xargs echo "git branch -D"

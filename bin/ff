@@ -1,0 +1,24 @@
+#!/bin/bash
+VolumeName="Mozilla"
+ 
+# Size in MB, make sure is not too low or not too high
+SizeInMB=240
+ 
+NumSectors=$((2*1024*SizeInMB))
+ 
+DeviceName=`hdid -nomount ram://$NumSectors`
+ 
+echo $DeviceName
+ 
+diskutil eraseVolume HFS+ $VolumeName $DeviceName
+ 
+# move the current profiles folder
+mv ~/Library/Caches/Firefox/Profiles ~/Library/Caches/Firefox/Profiles_ 
+ 
+# make a symlink to the ramdisk
+ln -s /Volumes/$VolumeName ~/Library/Caches/Firefox/Profiles 
+ 
+# then copy it to the ramdisk
+/bin/cp -r ~/Library/Caches/Firefox/Profiles_/* ~/Library/Caches/Firefox/Profiles
+
+open /Applications/Firefox.app
