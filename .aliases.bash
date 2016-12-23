@@ -8,9 +8,6 @@ alias octave="exec '/Applications/Octave.app/Contents/Resources/bin/octave'"
 alias restartsound="sudo kill -9 `ps ax|grep 'coreaudio[a-z]' |awk '{print $1}'`"
 alias lock="/System/Library/CoreServices/Menu\ Extras/User.menu/Contents/Resources/CGSession -suspend"
 
-alias sshgo="ssh -p 4444 fbartho@serendipity.zapto.org "
-alias sshg="ssh -p 4444 fbartho@10.0.0.1 "
-alias sshf="ssh fbartho@fbartho.com "
 alias rmsvn="find ./ -name .svn -exec rm -rf {} \;"
 alias rmnonsvn="svn status | grep ? | awk '{print $2}' | xargs rm -rf"
 
