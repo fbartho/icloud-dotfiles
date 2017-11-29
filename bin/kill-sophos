@@ -1,0 +1,9 @@
+#!/bin/sh
+# Disable Sophos On Access
+
+set -o errexit
+sudo defaults write /Library/Preferences/com.sophos.sav.plist AutoLaunch -bool false
+sudo pkill SophosScanD || echo "SophosScanD wasn't running, nothing killed"
+sudo pkill Sophos Anti-Virus || echo "Sophos Anti-Virus wasn't running, nothing killed"
+
+echo "Sophos Murdered."

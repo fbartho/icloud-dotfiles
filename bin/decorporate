@@ -2,6 +2,7 @@
 
 echo 1. Remove the configuration profiles
 sudo profiles -P | grep -v "configuration" | cut -d \  -f 4 | xargs -L1 echo sudo profiles -R -p
+sudo profiles -D -f
 
 echo 2. Remove JAMF
 sudo rm -r /Applications/Self\ Service.app
