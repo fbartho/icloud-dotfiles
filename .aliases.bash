@@ -83,5 +83,5 @@ alias uniq_inplace="awk '!x[\$0]++'"
 alias uniq_inplace_latest="tail -r | uniq_inplace | tail -r"
 
 # NodeJS Aliases
-yarn-upgrade="rm yarn.lock && yarn"
+alias yarn_upgrade="rm yarn.lock && yarn"
 
