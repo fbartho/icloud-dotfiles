@@ -82,6 +82,3 @@ alias restartsound="fix_audio"
 alias uniq_inplace="awk '!x[\$0]++'"
 alias uniq_inplace_latest="tail -r | uniq_inplace | tail -r"
 
-# NodeJS Aliases
-alias yarn_upgrade="rm yarn.lock && yarn"
-
