@@ -45,6 +45,14 @@ source "/Volumes/secure-dotfiles/.env"
 ## Increase limit of open file descriptors because watch processes
 ulimit -n 10000
 
+# Prepare Rails
+#export RAILS_ENV="development"
+#export RACK_ENV="development"
+
+# Prepare Ruby
+export RBENV_ROOT=/usr/local/var/rbenv
+if which rbenv > /dev/null; then eval "$(rbenv init -)"; fi
+
 ## Load aliases
 source "$HOME/.aliases.bash"
 source `which go_use_aliases`
