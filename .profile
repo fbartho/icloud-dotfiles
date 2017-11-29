@@ -13,6 +13,7 @@ fi
 
 ## My own scripts
 PATH="$HOME/.bin:$PATH"
+PATH="/usr/local/sbin:$PATH"
 PATH="/usr/local/share/npm/bin:$PATH"
 
 # Bash settings
@@ -45,7 +46,7 @@ source "/Volumes/secure-dotfiles/.env"
 ulimit -n 10000
 
 ## Load aliases
-source .aliases.bash
+source "$HOME/.aliases.bash"
 source `which go_use_aliases`
 source `which go_use_fixup_env`
 
@@ -55,3 +56,8 @@ eval "$(hub alias -s)"
 ## load custom PS1 prompt
 source $HOME/.bin/ps1
 
+export PATH="/usr/local/opt/gsl@1/bin:$PATH"
+
+# Make sure /usr/local/bin is first
+export PATH="/usr/local/opt/openssl/bin:$PATH"
+export PATH="/usr/local/bin:$PATH"
