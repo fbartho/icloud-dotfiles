@@ -64,9 +64,10 @@ source `which go_use_fixup_env`
 # Alias Hub as Git
 eval "$(hub alias -s)"
 
-## load custom PS1 prompt
+# load custom PS1 prompt
 source $HOME/.bin/ps1
 
+# gsl
 export PATH="/usr/local/opt/gsl@1/bin:$PATH"
 
 # Make sure /usr/local/bin is first
