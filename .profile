@@ -26,6 +26,9 @@ if [ -f $(brew --prefix)/etc/bash_completion ]; then
   source $(brew --prefix)/etc/bash_completion
 fi
 
+## Setup yarn tab-completion
+[ -f ~/.config/yarn/global/node_modules/tabtab/.completions/yarn.bash ] && . ~/.config/yarn/global/node_modules/tabtab/.completions/yarn.bash
+
 
 # Other Customization
 
