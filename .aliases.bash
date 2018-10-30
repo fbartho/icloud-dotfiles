@@ -31,7 +31,7 @@ openx() {
     if [ -n "$fileToOpen" ]
     then
         echo $fileToOpen
-        open $fileToOpen
+        xed $fileToOpen
     else
         find . -maxdepth 1 -name *.xcodeproj -print0 | while IFS= read -r -d '' file; do
             fileToOpen=$file
@@ -40,7 +40,7 @@ openx() {
         if [ -n "$fileToOpen" ]
         then
             echo $fileToOpen
-            open $fileToOpen
+            xed $fileToOpen
         else
             echo "No xcode files to open."
         fi
