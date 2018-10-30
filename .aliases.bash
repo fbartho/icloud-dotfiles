@@ -24,7 +24,7 @@ alias rmnonsvn="svn status | grep ? | awk '{print $2}' | xargs rm -rf"
 # alias xcp="if [ \"$(ls *.xcworkspace 2> /dev/null | wc -l)\" != \"       0\" ]; then    open *.xcworkspace; else    open *.xcodeproj; fi"
 openx() {
     fileToOpen='';
-    for file in `find . -maxdepth 1 -name *.xcworkspace`; do
+    find . -maxdepth 1 -name *.xcworkspace -print0 | while IFS= read -r -d '' file; do
         fileToOpen=$file
     done
 
@@ -33,7 +33,7 @@ openx() {
         echo $fileToOpen
         open $fileToOpen
     else
-        for file in `find . -maxdepth 1 -name *.xcodeproj`; do
+        find . -maxdepth 1 -name *.xcodeproj -print0 | while IFS= read -r -d '' file; do
             fileToOpen=$file
         done
 
