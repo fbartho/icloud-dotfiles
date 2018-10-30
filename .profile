@@ -2,12 +2,13 @@
 if command -v rbenv &>/dev/null; then
   eval "$(rbenv init -)"
 fi
-if command -v nodenv &>/dev/null; then
-  eval "$(nodenv init -)"
-fi
 if command -v pyenv &>/dev/null; then
   eval "$(pyenv init -)"
 fi
+
+export NVM_DIR="$HOME/.nvm"
+[ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
+[ -s "$NVM_DIR/bash_completion" ] && source "$NVM_DIR/bash_completion"
 
 # Additional PATH configuration
 
