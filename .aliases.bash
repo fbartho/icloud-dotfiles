@@ -50,6 +50,8 @@ openx() {
 # Shorthand version of "openx", use "xcp" instead.
 alias xcp="openx"
 
+alias chrome="open -a \"Google Chrome\""
+
 alias podxcp="pod install && xcp"
 
 alias esp="open -a Espresso "
@@ -77,6 +79,8 @@ alias pa="sudo ~/Library/Application\ Support/Steam/SteamApps/common/Planetary\ 
 
 alias fix_audio="sudo kill -9 `ps ax|grep 'coreaudio[a-z]' | awk '{print $1}'`"
 alias restartsound="fix_audio"
+alias fix_dns="sudo killall -HUP mDNSResponder"
+alias restartdns="fix_dns"
 
 # Removes duplicated lines keeping the first instance of a line.
 alias uniq_inplace="awk '!x[\$0]++'"
