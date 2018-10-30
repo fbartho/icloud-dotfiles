@@ -68,6 +68,11 @@ eval "$(hub alias -s)"
 # load custom PS1 prompt
 source $HOME/.bin/ps1
 
+# Prepare Android
+export ANDROID_HOME=$HOME/Library/Android/sdk
+export PATH=$PATH:$ANDROID_HOME/tools
+export PATH=$PATH:$ANDROID_HOME/platform_tools
+
 # gsl
 export PATH="/usr/local/opt/gsl@1/bin:$PATH"
 
