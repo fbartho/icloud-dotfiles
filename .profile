@@ -65,6 +65,16 @@ source `which go_use_fixup_env`
 # Alias Hub as Git
 eval "$(hub alias -s)"
 
+# GPG Stuff
+if [ -S ~/.gnupg/S.gpg-agent ]; then
+    echo "[gpg-agent]: status is good."
+else
+    eval $(gpg-agent --daemon)
+fi
+
+## Fix GPG "Inappropriate ioctl for device"
+export GPG_TTY=$(tty)
+
 # load custom PS1 prompt
 source $HOME/.bin/ps1
 

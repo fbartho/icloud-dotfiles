@@ -1,6 +1,7 @@
 [user]
 	name = Frederic Barthelemy
 	email = git@fbartho.com
+	signingkey = 9D2B3E7C1526516EE90FAF126FF43C49A5D473EF
 [branch]
 	autosetupmerge = true
 [alias]
@@ -77,3 +78,7 @@
 	excludesfile = /Users/fbarthelemy/.gitignore_global
 [diff]
 	compactionHeuristic = true
+[commit]
+	gpgsign = true
+[gpg]
+	program = gpg
