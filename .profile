@@ -81,12 +81,16 @@ source $HOME/.bin/ps1
 
 # Prepare Android
 export ANDROID_HOME=$HOME/Library/Android/sdk
+export PATH=$PATH:$ANDROID_HOME/emulator
 export PATH=$PATH:$ANDROID_HOME/tools
-export PATH=$PATH:$ANDROID_HOME/platform_tools
+export PATH=$PATH:$ANDROID_HOME/tools/bin
+export PATH=$PATH:$ANDROID_HOME/platform-tools
 
 # gsl
 export PATH="/usr/local/opt/gsl@1/bin:$PATH"
 
 # Make sure /usr/local/bin is first
 export PATH="/usr/local/opt/openssl/bin:$PATH"
+export LIBRARY_PATH="$LIBRARY_PATH:/usr/local/opt/openssl/lib/"
+
 export PATH="/usr/local/bin:$PATH"
