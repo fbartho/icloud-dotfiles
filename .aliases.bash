@@ -19,6 +19,11 @@ alias versions="{ sw_vers; echo "---"; xcodebuild -version; }"
 alias rmsvn="find ./ -name .svn -exec rm -rf {} \;"
 alias rmnonsvn="svn status | grep ? | awk '{print $2}' | xargs rm -rf"
 
+alias simshot="xcrun simctl io booted screenshot" # output-path
+alias simaddmedia="xcrun simctl addmedia booted" # path-to-media
+alias simopenurl="xcrun simctl openurl booted" # url
+alias simappcontainer="xcrun simctl get_app_container booted" # com.bundle.identifier
+
 # Open Xcodeworkspace but fallback to xcodeproj
 # alias xcp="open *.xc*"
 # alias xcp="if [ \"$(ls *.xcworkspace 2> /dev/null | wc -l)\" != \"       0\" ]; then    open *.xcworkspace; else    open *.xcodeproj; fi"
