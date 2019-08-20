@@ -18,6 +18,8 @@
 	vn = !"cat submodules/narwhal/build/Current/NGCore/Client/Core/Capabilities.js | grep \"this._fields = \" | awk '{gsub(/'\"'\"'g*};|'\"'\"'g/,\"\")}{print $8}'"
 	conar = !"git co `git vn`"
 	cleanup = !"git reflog expire --expire=1.minute refs/heads/master; git fsck --unreachable && git prune && git gc"
+	current = !"git rev-parse --abbrev-ref HEAD"
+	currentpb = !"git current | tr -d '\n' | pbcopy"
 	pa = pushall
 	pushall = !pushall
 	amend-reuse = commit --amend -C HEAD --reset-author
