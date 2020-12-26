@@ -13,6 +13,13 @@ alias safeshutdown="osascript -e 'tell app \"System Events\" to shut down'"
 alias sleepnow="pmset sleepnow"
 alias displaysleepnow="pmset displaysleepnow"
 
+alias timemachine_info="sudo tmutil listbackups"
+alias timemachine_start="sudo tmutil startbackup"
+alias timemachine_stop="sudo tmutil stopbackup"
+# One time boost time machine priority
+alias timemachine_boost="sudo sysctl debug.lowpri\_throttle_enabled=0"
+alias timemachine_regular="sudo sysctl debug.lowpri\_throttle_enabled=1"
+
 # Get the system & xcode versions!
 alias versions="{ sw_vers; echo "---"; xcodebuild -version; }"
 
