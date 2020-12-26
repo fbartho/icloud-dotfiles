@@ -86,3 +86,13 @@
 	gpgsign = true
 [gpg]
 	program = gpg
+[grep]
+	lineNumber = false
+[init]
+	defaultBranch = main
+
+# Git Delta https://github.com/dandavison/delta
+[core]
+    pager = delta
+[delta]
+    syntax-theme = GitHub
