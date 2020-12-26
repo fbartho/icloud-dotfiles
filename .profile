@@ -1,3 +1,6 @@
+# Sticking with bash for now.
+export BASH_SILENCE_DEPRECATION_WARNING=1
+
 # Initialize my "xenv" language runtime managers if installed
 if command -v rbenv &>/dev/null; then
   eval "$(rbenv init -)"
