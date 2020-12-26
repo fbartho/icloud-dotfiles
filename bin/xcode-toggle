@@ -1,12 +1,15 @@
 #!/bin/bash
 
-`xcode-select -p | grep -i beta > /dev/null`
+ALT_XCODE_NAME="-10.3"
+ALT_XCODE_GREP="10"
+
+`xcode-select -p | grep -i $ALT_XCODE_GREP > /dev/null`
 if [ $? -eq 0 ]
 then
-	echo "Using beta. Switching to release."
+	echo "Using Xcode$ALT_XCODE_NAME. Switching to release."
 	sudo xcode-select -s /Applications/Xcode.app
 else
-	echo "Using release. Switching to beta."
-	sudo xcode-select -s /Applications/Xcode-beta.app
+	echo "Using release. Switching to Xcode$ALT_XCODE_NAME."
+	sudo xcode-select -s "/Applications/Xcode$ALT_XCODE_NAME.app"
 fi
 xcode-select -p
