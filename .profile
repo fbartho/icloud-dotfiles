@@ -9,17 +9,29 @@ if command -v pyenv &>/dev/null; then
   eval "$(pyenv init -)"
 fi
 
-unset PREFIX
+# nvm deactivate 2>&1 /dev/null || echo "No nvm yet, that's okay."
+# brew unlink node | grep -e "0 symlinks removed" > /dev/null || echo "Had to remove a brew-installed node, use nvm!" && brew uninstall --ignore-dependencies node
+# npm config delete prefix
 export NVM_DIR="$HOME/.nvm"
+
+unset npm_config_prefix
+unset PREFIX
+# [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" 2>&1
 [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && source "$NVM_DIR/bash_completion"
+nvm use --delete-prefix v10.17.0
+# nvm use default 2>&1
+nvm use 14
+nvm use 14
+# node --version 2>&1 /dev/null || nvm use default
+# nvm use `cat .nvmrc` && npm config delete prefix || echo "Not in a .nvmrc dir"
 
 # Additional PATH configuration
 
 ## My own scripts
 PATH="$HOME/.bin:$PATH"
 PATH="/usr/local/sbin:$PATH"
-PATH="/usr/local/share/npm/bin:$PATH"
+# PATH="/usr/local/share/npm/bin:$PATH"
 
 # Bash settings
 
@@ -97,3 +109,5 @@ export PATH="/usr/local/opt/openssl/bin:$PATH"
 export LIBRARY_PATH="$LIBRARY_PATH:/usr/local/opt/openssl/lib/"
 
 export PATH="/usr/local/bin:$PATH"
+npm config delete prefix
+unset npm_config_prefix
