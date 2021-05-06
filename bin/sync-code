@@ -1,0 +1,32 @@
+pwd
+
+# Important note: source dir must have trailing slash, so that it's the contents of the dir that go to the second location
+src="/Users/fbarthelemy/Code/"
+dest="/Volumes/Pacific Sunset/Code"
+
+set -e # exit on error!
+
+ls "$src"
+ls "$dest"
+
+# spell-checker: ignore rsync fbarthelemy
+
+# options
+
+# -z Compress transfer -- not necessary to local disk
+# --delete delete files at destination if not present in source! ## Danger!
+
+# -a "archive mode" = recursive but preserving a lot more
+# -v "verbose"
+# -vvv "double verbose"
+# -u "update"
+# -h "human readable numbers"
+# --dry-run
+# --progress --partial = -P
+
+
+# https://explainshell.com/explain?cmd=
+rsync -a -u -h --progress \
+  --exclude=.DS_Store --exclude=node_modules --exclude=Pods \
+  --exclude=TRClient2 --exclude=TRClient3 --exclude=TRClient4 --exclude=TRClient5 --exclude=TRClient6 --exclude=TRClient7 --exclude=TRClient8 --exclude=TRClient9 \
+  "$src" "$dest"
