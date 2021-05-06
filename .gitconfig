@@ -4,6 +4,8 @@
 	signingkey = 9D2B3E7C1526516EE90FAF126FF43C49A5D473EF
 [branch]
 	autosetupmerge = true
+[pull]
+	rebase = false
 [alias]
 	st = status
 	co = checkout
@@ -18,7 +20,7 @@
 	# x = !open -a /Users/fbarthelemy/Code/gitx/build/Debug/GitX.app  .
 	vn = !"cat submodules/narwhal/build/Current/NGCore/Client/Core/Capabilities.js | grep \"this._fields = \" | awk '{gsub(/'\"'\"'g*};|'\"'\"'g/,\"\")}{print $8}'"
 	conar = !"git co `git vn`"
-	cleanup = !"git reflog expire --expire=1.minute refs/heads/master; git fsck --unreachable && git prune && git gc"
+	cleanup = !"git reflog expire --expire=1.minute refs/heads/main; git fsck --unreachable && git prune && git gc"
 	current = !"git rev-parse --abbrev-ref HEAD"
 	currentpb = !"git current | tr -d '\n' | pbcopy"
 	pa = pushall
@@ -27,7 +29,7 @@
 	git = !git
 	gst = status
 	gofmt = !git status --porcelain | sed -E "'s( [A-Z] (./('" | grep ".go$" | xargs -n1 go fmt
-	bclean = "!f() { git branch --merged ${1-master} | grep -v " ${1-master}$" | xargs -n 1 git branch -d; }; f"
+	bclean = "!f() { git branch --merged ${1-main} | grep -v " ${1-main}$" | xargs -n 1 git branch -d; }; f"
 	apply-gitignore = !git ls-files -ci --exclude-standard -z | xargs -0 git rm --cached
 	split = !git-split
 	showlocal = !git-showlocal
