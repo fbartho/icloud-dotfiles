@@ -21,8 +21,8 @@ unset PREFIX
 [ -s "$NVM_DIR/bash_completion" ] && source "$NVM_DIR/bash_completion"
 nvm use --delete-prefix v10.17.0
 # nvm use default 2>&1
-nvm use 14
-nvm use 14
+nvm use 15
+nvm use 15
 # node --version 2>&1 /dev/null || nvm use default
 # nvm use `cat .nvmrc` && npm config delete prefix || echo "Not in a .nvmrc dir"
 
