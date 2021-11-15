@@ -3,7 +3,14 @@
 ALT_XCODE_NAME="13-beta4"
 ALT_XCODE_GREP="13-beta4"
 
-`xcode-select -p | grep -i $ALT_XCODE_GREP > /dev/null`
+current_path=`xcode-select -p`
+if [ current_path == "/Library/Developer/CommandLineTools" ]; then
+	echo "CommandLineTools selected. Switching to release."
+	sudo xcode-select -s /Applications/Xcode.app
+	exit 0
+fi
+
+`echo "$current_path" | grep -i $ALT_XCODE_GREP > /dev/null`
 if [ $? -eq 0 ]
 then
 	echo "Using Xcode$ALT_XCODE_NAME. Switching to release."
