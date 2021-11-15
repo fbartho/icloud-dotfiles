@@ -75,8 +75,11 @@ if which rbenv > /dev/null; then eval "$(rbenv init -)"; fi
 
 ## Load aliases
 source "$HOME/.aliases.bash"
-source `which go_use_aliases`
-source `which go_use_fixup_env`
+# Conditionally enable my go_use utility
+if command -v go_use_aliases &>/dev/null; then
+  source `which go_use_aliases`
+  source `which go_use_fixup_env`
+fi
 
 # Alias Hub as Git
 eval "$(hub alias -s)"
