@@ -9,6 +9,16 @@ if command -v pyenv &>/dev/null; then
   eval "$(pyenv init -)"
 fi
 
+# Handle Mac platforms
+CPU=$(uname -p)
+if [[ "$CPU" == "arm" ]]; then
+    export PATH="/opt/homebrew/bin:$PATH"
+    alias oldbrew="/usr/local/bin/brew"
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+else
+    export PATH="/usr/local/bin:$PATH"
+fi
+
 # nvm deactivate 2>&1 /dev/null || echo "No nvm yet, that's okay."
 # brew unlink node | grep -e "0 symlinks removed" > /dev/null || echo "Had to remove a brew-installed node, use nvm!" && brew uninstall --ignore-dependencies node
 # npm config delete prefix
@@ -37,6 +47,12 @@ PATH="/usr/local/sbin:$PATH"
 
 ## stickier .bash_history
 shopt -s histappend
+
+## Set up bash git completion
+if [ -f /Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash ]; then
+  /Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash
+fi
+source "/Library/Developer/CommandLineTools/usr/share/git-core/git-prompt.sh"
 
 ## Set up tab-completion (requires `brew install bash-completion`)
 if [ -f $(brew --prefix)/etc/bash_completion ]; then
@@ -107,10 +123,8 @@ export PATH=$PATH:$ANDROID_HOME/platform-tools
 # gsl
 export PATH="/usr/local/opt/gsl@1/bin:$PATH"
 
-# Make sure /usr/local/bin is first
 export PATH="/usr/local/opt/openssl/bin:$PATH"
 export LIBRARY_PATH="$LIBRARY_PATH:/usr/local/opt/openssl/lib/"
 
-export PATH="/usr/local/bin:$PATH"
 npm config delete prefix
 unset npm_config_prefix
