@@ -50,7 +50,7 @@ shopt -s histappend
 
 ## Set up bash git completion
 if [ -f /Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash ]; then
-  /Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash
+  source /Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash
 fi
 source "/Library/Developer/CommandLineTools/usr/share/git-core/git-prompt.sh"
 
