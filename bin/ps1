@@ -115,6 +115,25 @@ get_status()
   fi
 }
 
+# Shorten pwd to last 2-3 components, max ~40 chars
+short_pwd()
+{
+  local pwd_str="${PWD/#$HOME/~}"
+  local max_len=40
+
+  if [ ${#pwd_str} -le $max_len ]; then
+    echo "$pwd_str"
+  else
+    # Get last 3 path components
+    local short=$(echo "$pwd_str" | rev | cut -d'/' -f1-3 | rev)
+    if [ ${#short} -gt $max_len ]; then
+      # Still too long, try 2 components
+      short=$(echo "$pwd_str" | rev | cut -d'/' -f1-2 | rev)
+    fi
+    echo "…/$short"
+  fi
+}
+
 export PS1='$(get_status)$(git branch &>/dev/null;\
 if [ $? -eq 0 ]; then \
   echo "$(echo `git status` | grep "nothing to commit" > /dev/null 2>&1; \
@@ -124,8 +143,8 @@ if [ $? -eq 0 ]; then \
   else \
     # @5 - Changes to working tree
     echo "'$IRed'"$(__git_ps1 " {%s}"); \
-  fi) '$BYellow$PathShort$Color_Off' \n$shellChoice "; \
+  fi) '$BYellow'$(short_pwd)'$Color_Off' $shellChoice "; \
 else \
   # @2 - Prompt when not in GIT repo
-  echo " '$Blue$PathShort$Color_Off' \n$shellChoice "; \
+  echo " '$Blue'$(short_pwd)'$Color_Off' $shellChoice "; \
 fi)'
