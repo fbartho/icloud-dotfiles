@@ -38,6 +38,7 @@
 	recentco = !git-recentco
 	reauthor = !sh -c 'eval `git log --reverse --topo-order --pretty=format:\"git cherry-pick %H &&  git commit --amend -C %H --author=\\\"%aN <%aE>\\\" && \" $0 ` "echo success" '
 	stash-rename = "!_() { rev=$(git rev-parse $1) && git stash drop $1 || exit 1 ; git stash store -m \"$2\" $rev; }; _"
+	pr-upstream = !git config branch.$(git branch --show-current).remote
 [color]
 	ui = auto
 [color "branch"]

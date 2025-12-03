@@ -6,6 +6,8 @@ if command -v rbenv &>/dev/null; then
   eval "$(rbenv init -)"
 fi
 if command -v pyenv &>/dev/null; then
+  export PYENV_ROOT="$HOME/.pyenv"
+  command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"
   eval "$(pyenv init -)"
 fi
 
@@ -31,10 +33,13 @@ unset PREFIX
 [ -s "$NVM_DIR/bash_completion" ] && source "$NVM_DIR/bash_completion"
 nvm use --delete-prefix v10.17.0
 # nvm use default 2>&1
-nvm use 16
-nvm use 16
+nvm use 23
+nvm use 23
 # node --version 2>&1 /dev/null || nvm use default
 # nvm use `cat .nvmrc` && npm config delete prefix || echo "Not in a .nvmrc dir"
+
+# Activate yarn berry
+corepack enable
 
 # Additional PATH configuration
 
@@ -51,8 +56,18 @@ shopt -s histappend
 ## Set up bash git completion
 if [ -f /Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash ]; then
   source /Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash
+elif [ -f /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-completion.bash ]; then
+  source /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-completion.bash
+else
+  echo "No git-completion.bash found"
 fi
-source "/Library/Developer/CommandLineTools/usr/share/git-core/git-prompt.sh"
+if [ -f /Library/Developer/CommandLineTools/usr/share/git-core/git-prompt.sh ]; then
+  source /Library/Developer/CommandLineTools/usr/share/git-core/git-prompt.sh
+elif [ -f /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-prompt.sh ]; then
+  source /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-prompt.sh
+else
+  echo "No git-prompt.sh found"
+fi
 
 ## Set up tab-completion (requires `brew install bash-completion`)
 if [ -f $(brew --prefix)/etc/bash_completion ]; then
@@ -81,14 +96,6 @@ source "/Volumes/secure-dotfiles/.env"
 ## Increase limit of open file descriptors because watch processes
 ulimit -n 10000
 
-# Prepare Rails
-#export RAILS_ENV="development"
-#export RACK_ENV="development"
-
-# Prepare Ruby
-export RBENV_ROOT=/usr/local/var/rbenv
-if which rbenv > /dev/null; then eval "$(rbenv init -)"; fi
-
 ## Load aliases
 source "$HOME/.aliases.bash"
 # Conditionally enable my go_use utility
@@ -96,9 +103,6 @@ if command -v go_use_aliases &>/dev/null; then
   source `which go_use_aliases`
   source `which go_use_fixup_env`
 fi
-
-# Alias Hub as Git
-eval "$(hub alias -s)"
 
 # GPG Stuff
 if [ -S ~/.gnupg/S.gpg-agent ]; then
@@ -126,5 +130,10 @@ export PATH="/usr/local/opt/gsl@1/bin:$PATH"
 export PATH="/usr/local/opt/openssl/bin:$PATH"
 export LIBRARY_PATH="$LIBRARY_PATH:/usr/local/opt/openssl/lib/"
 
-npm config delete prefix
-unset npm_config_prefix
+# Python shit
+export PATH="$HOME/.local/bin:$PATH"
+
+#npm config delete prefix
+#unset npm_config_prefix
+
+. "$HOME/.cargo/env"

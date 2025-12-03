@@ -1,7 +1,7 @@
 #!/bin/bash
 
-ALT_XCODE_NAME="13-beta4"
-ALT_XCODE_GREP="13-beta4"
+ALT_XCODE_NAME="15.1-beta3"
+ALT_XCODE_GREP="15.1-beta3"
 
 current_path=`xcode-select -p`
 if [ current_path == "/Library/Developer/CommandLineTools" ]; then

@@ -13,6 +13,9 @@ alias safeshutdown="osascript -e 'tell app \"System Events\" to shut down'"
 alias sleepnow="pmset sleepnow"
 alias displaysleepnow="pmset displaysleepnow"
 
+# Strip ANSI color codes from stdin
+alias strip_color="sed -e 's/\x1b\[[0-9;]*m//g'"
+
 alias nvm_upgrade_stable="nvm install stable --reinstall-packages-from=$(nvm current)"
 
 alias timemachine_info="sudo tmutil listbackups"
@@ -27,6 +30,9 @@ alias versions="{ sw_vers; echo "---"; xcodebuild -version; }"
 
 alias rmsvn="find ./ -name .svn -exec rm -rf {} \;"
 alias rmnonsvn="svn status | grep ? | awk '{print $2}' | xargs rm -rf"
+
+alias find_node_modules="find . -name 'node_modules' -type d -prune -print"
+alias nuke_node_modules="find . -name 'node_modules' -type d -prune -print -exec rm -rf '{}' \;"
 
 alias simshot="xcrun simctl io booted screenshot" # output-path
 alias simaddmedia="xcrun simctl addmedia booted" # path-to-media
@@ -57,7 +63,17 @@ openx() {
             echo $fileToOpen
             xed $fileToOpen
         else
-            echo "No xcode files to open."
+            find . -maxdepth 1 -name Package.swift -print0 | while IFS= read -r -d '' file; do
+                fileToOpen=$file
+            done
+
+            if [ -n "$fileToOpen" ]
+            then
+                echo $fileToOpen
+                xed $fileToOpen
+            else
+                echo "No xcode files to open."
+            fi
         fi
     fi
 }
@@ -87,6 +103,8 @@ alias gpb="push_branch"
 alias glhc="git lh | pbcopy"
 alias gg="git grep -n"
 
+alias hub="git"
+
 alias gitup="open -a GitUp `git rev-parse --show-toplevel`"
 
 alias broforce="sudo /Users/fbarthelemy/Library/Application\ Support/Steam/SteamApps/common/Broforce/Broforce.app/Contents/MacOS/Broforce"
@@ -101,3 +119,10 @@ alias restartdns="fix_dns"
 alias uniq_inplace="awk '!x[\$0]++'"
 alias uniq_inplace_latest="tail -r | uniq_inplace | tail -r"
 
+alias hca_helm='HTTPS_PROXY=localhost:8888 helm'
+alias hca_kubectl='HTTPS_PROXY=localhost:8888 winpty kubectl'
+
+# if command tac doesn't exist add an alias to tail -r
+if ! command -v tac &> /dev/null; then
+    alias tac="tail -r"
+fi
