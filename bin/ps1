@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
-# Minimal prompt for Claude Code agents (saves tokens, skips slow git checks)
-if [ -n "$CLAUDECODE" ]; then
+# Minimal prompt for AI agents (saves tokens, skips slow git checks)
+if [ -n "$AI_AGENT" ]; then
     export PS1='$ '
     return 0
 fi

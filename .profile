@@ -1,6 +1,14 @@
 # Sticking with bash for now.
 export BASH_SILENCE_DEPRECATION_WARNING=1
 
+# Detect AI agents and set unified variable
+# Add new agent env vars here as needed
+# Known: CLAUDECODE (Claude Code), GEMINI_CLI (Google Gemini), CURSOR_TRACE_ID (Cursor), AIDER
+# Note: OpenAI Codex doesn't appear to set a detection variable yet
+if [ -n "$CLAUDECODE" ] || [ -n "$GEMINI_CLI" ] || [ -n "$CURSOR_TRACE_ID" ] || [ -n "$AIDER" ]; then
+    export AI_AGENT=1
+fi
+
 # Initialize my "xenv" language runtime managers if installed
 if command -v rbenv &>/dev/null; then
   eval "$(rbenv init -)"
@@ -34,7 +42,7 @@ unset PREFIX
 
 # GCP was installing an ancient version of node:
 # nvm use --delete-prefix v10.17.0
-if [ -n "$CLAUDECODE" ]; then
+if [ -n "$AI_AGENT" ]; then
     nvm use default --silent
 else
     nvm use default
@@ -57,8 +65,8 @@ PATH="/usr/local/sbin:$PATH"
 ## stickier .bash_history
 shopt -s histappend
 
-## Set up bash git completion (skip for Claude agents - not needed)
-if [ -z "$CLAUDECODE" ]; then
+## Set up bash git completion (AI agents don't need this)
+if [ -z "$AI_AGENT" ]; then
   if [ -f /Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash ]; then
     source /Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash
   elif [ -f /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-completion.bash ]; then
@@ -114,7 +122,7 @@ fi
 
 # GPG Stuff
 if [ -S ~/.gnupg/S.gpg-agent ]; then
-    [ -z "$CLAUDECODE" ] && echo "[gpg-agent]: status is good."
+    [ -z "$AI_AGENT" ] && echo "[gpg-agent]: status is good."
 else
     eval $(gpg-agent --daemon)
 fi
