@@ -1,5 +1,10 @@
 #!/bin/bash -e
 
+# Minimal prompt for Claude Code agents (saves tokens, skips slow git checks)
+if [ -n "$CLAUDECODE" ]; then
+    export PS1='$ '
+    return 0
+fi
 
 #  Customize BASH PS1 prompt to show current GIT repository and branch.
 #  by Mike Stewart - http://MediaDoneRight.com

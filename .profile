@@ -31,10 +31,14 @@ unset PREFIX
 # [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh" 2>&1
 [ -s "$NVM_DIR/nvm.sh" ] && source "$NVM_DIR/nvm.sh"
 [ -s "$NVM_DIR/bash_completion" ] && source "$NVM_DIR/bash_completion"
-nvm use --delete-prefix v10.17.0
-# nvm use default 2>&1
-nvm use 23
-nvm use 23
+
+# GCP was installing an ancient version of node:
+# nvm use --delete-prefix v10.17.0
+if [ -n "$CLAUDECODE" ]; then
+    nvm use default --silent
+else
+    nvm use default
+fi
 # node --version 2>&1 /dev/null || nvm use default
 # nvm use `cat .nvmrc` && npm config delete prefix || echo "Not in a .nvmrc dir"
 
@@ -53,29 +57,33 @@ PATH="/usr/local/sbin:$PATH"
 ## stickier .bash_history
 shopt -s histappend
 
-## Set up bash git completion
-if [ -f /Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash ]; then
-  source /Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash
-elif [ -f /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-completion.bash ]; then
-  source /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-completion.bash
-else
-  echo "No git-completion.bash found"
-fi
-if [ -f /Library/Developer/CommandLineTools/usr/share/git-core/git-prompt.sh ]; then
-  source /Library/Developer/CommandLineTools/usr/share/git-core/git-prompt.sh
-elif [ -f /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-prompt.sh ]; then
-  source /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-prompt.sh
-else
-  echo "No git-prompt.sh found"
-fi
+## Set up bash git completion (skip for Claude agents - not needed)
+if [ -z "$CLAUDECODE" ]; then
+  if [ -f /Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash ]; then
+    source /Library/Developer/CommandLineTools/usr/share/git-core/git-completion.bash
+  elif [ -f /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-completion.bash ]; then
+    source /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-completion.bash
+  else
+    echo "No git-completion.bash found"
+  fi
+  if [ -f /Library/Developer/CommandLineTools/usr/share/git-core/git-prompt.sh ]; then
+    source /Library/Developer/CommandLineTools/usr/share/git-core/git-prompt.sh
+  elif [ -f /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-prompt.sh ]; then
+    source /Applications/Xcode.app/Contents/Developer/usr/share/git-core/git-prompt.sh
+  else
+    echo "No git-prompt.sh found"
+  fi
 
-## Set up tab-completion (requires `brew install bash-completion`)
-if [ -f $(brew --prefix)/etc/bash_completion ]; then
-  source $(brew --prefix)/etc/bash_completion
-fi
+  ## Set up tab-completion (requires `brew install bash-completion`)
+  # Cache brew --prefix to avoid slow call each shell init
+  BREW_PREFIX="${BREW_PREFIX:-$(brew --prefix)}"
+  if [ -f "$BREW_PREFIX/etc/bash_completion" ]; then
+    source "$BREW_PREFIX/etc/bash_completion"
+  fi
 
-## Setup yarn tab-completion
-[ -f ~/.config/yarn/global/node_modules/tabtab/.completions/yarn.bash ] && . ~/.config/yarn/global/node_modules/tabtab/.completions/yarn.bash
+  ## Setup yarn tab-completion
+  [ -f ~/.config/yarn/global/node_modules/tabtab/.completions/yarn.bash ] && . ~/.config/yarn/global/node_modules/tabtab/.completions/yarn.bash
+fi
 
 
 # Other Customization
@@ -106,7 +114,7 @@ fi
 
 # GPG Stuff
 if [ -S ~/.gnupg/S.gpg-agent ]; then
-    echo "[gpg-agent]: status is good."
+    [ -z "$CLAUDECODE" ] && echo "[gpg-agent]: status is good."
 else
     eval $(gpg-agent --daemon)
 fi
