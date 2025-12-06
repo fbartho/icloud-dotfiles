@@ -1,0 +1,81 @@
+# Brewfile.basics - Essential packages for new machine setup
+# Generated 2025-12-06
+# Re-run 'select-essential-packages' to update selections
+
+# Taps
+tap "github/gh"
+tap "hashicorp/tap"
+tap "homebrew/bundle"
+tap "homebrew/services"
+tap "nektos/tap"
+tap "pakerwreah/calendr"
+tap "swiftwasm/tap"
+tap "thoughtbot/formulae"
+tap "vapor/tap"
+tap "wix/brew"
+
+# Formulae
+brew "act"
+brew "antidote"
+brew "bash-completion"
+brew "clang-format"
+brew "cmake"
+brew "docker"
+brew "docker-compose"
+brew "emacs"
+brew "exiftool"
+brew "fish"
+brew "fzf"
+brew "gh"
+brew "git-crypt"
+brew "git-delta"
+brew "git-lfs"
+brew "gnupg"
+brew "graphviz"
+brew "gti"
+brew "gum"
+brew "htop"
+brew "imagemagick"
+brew "jq"
+brew "markdown"
+brew "mas"
+brew "namebench"
+brew "netcat"
+brew "nushell"
+brew "pinentry-mac"
+brew "pyenv"
+brew "rbenv"
+brew "shellcheck"
+brew "starship"
+brew "thoughtbot/formulae/gitsh"
+brew "transmission-cli"
+brew "vapor/tap/vapor"
+brew "watchman"
+brew "wget"
+brew "wix/brew/applesimutils"
+
+# Casks
+cask "calendr"
+cask "ghostty"
+cask "lynx"
+cask "lynx-whiteboard"
+cask "rar"
+cask "syncthing"
+cask "syncthing-app"
+
+# Mac App Store
+mas "BetterSnapTool", id: 417375580
+mas "Breathable", id: 1536296487
+mas "Calca", id: 635758264
+mas "Deckset", id: 847496013
+mas "Deliveries", id: 290986013
+mas "Ivory", id: 6444602274
+mas "Keynote", id: 409183694
+mas "Numbers", id: 409203825
+mas "Pages", id: 409201541
+mas "Slack", id: 803453959
+mas "Speedtest", id: 1153157709
+mas "Tailscale", id: 1475387142
+mas "uBlock Origin Lite", id: 6745342698
+mas "Unsplash Wallpapers", id: 1284863847
+
