@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+#
+# brew-export
+# Export current Homebrew state to Brewfile.all
+#
+
+set -e
+
+DOTFILES_DIR="$HOME/.icloud-drive/dotfiles"
+OUTPUT="$DOTFILES_DIR/Brewfile.all"
+
+brew bundle dump --file="$OUTPUT" --force
+
+echo "Exported to $OUTPUT"
+echo ""
+cat "$OUTPUT"

@@ -1,4 +1,5 @@
 /bin/node_modules
 /.vim/swapfiles
 /.vim/.netrwhist
-/secure.dmg
+*.dmg
+Brewfile.all

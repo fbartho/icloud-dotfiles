@@ -12,23 +12,23 @@ OUTPUT="$DOTFILES_DIR/Brewfile.basics"
 
 # Parse existing selections from Brewfile.basics
 get_existing() {
-    local type="$1"
-    if [[ -f "$OUTPUT" ]]; then
-        case "$type" in
-            tap)
-                grep '^tap "' "$OUTPUT" 2>/dev/null | sed 's/tap "\([^"]*\)".*/\1/' || true
-                ;;
-            brew)
-                grep '^brew "' "$OUTPUT" 2>/dev/null | sed 's/brew "\([^"]*\)".*/\1/' || true
-                ;;
-            cask)
-                grep '^cask "' "$OUTPUT" 2>/dev/null | sed 's/cask "\([^"]*\)".*/\1/' || true
-                ;;
-            mas)
-                grep '^mas "' "$OUTPUT" 2>/dev/null | sed 's/mas "\([^"]*\)".*/\1/' || true
-                ;;
-        esac
-    fi
+	local type="$1"
+	if [[ -f "$OUTPUT" ]]; then
+		case "$type" in
+			tap)
+				grep '^tap "' "$OUTPUT" 2>/dev/null | sed 's/tap "\([^"]*\)".*/\1/' || true
+				;;
+			brew)
+				grep '^brew "' "$OUTPUT" 2>/dev/null | sed 's/brew "\([^"]*\)".*/\1/' || true
+				;;
+			cask)
+				grep '^cask "' "$OUTPUT" 2>/dev/null | sed 's/cask "\([^"]*\)".*/\1/' || true
+				;;
+			mas)
+				grep '^mas "' "$OUTPUT" 2>/dev/null | sed 's/mas "\([^"]*\)".*/\1/' || true
+				;;
+		esac
+	fi
 }
 
 echo "=== Select ESSENTIAL TAPS ==="
@@ -37,15 +37,15 @@ echo ""
 
 TAP_FLAGS=()
 while IFS= read -r item; do
-    [[ -n "$item" ]] && TAP_FLAGS+=("--selected=$item")
+	[[ -n "$item" ]] && TAP_FLAGS+=("--selected=$item")
 done <<< "$(get_existing tap)"
 
 TAP_LIST=$(brew tap)
 if [[ -n "$TAP_LIST" ]]; then
-    TAPS=$(echo "$TAP_LIST" | gum choose --no-limit --height=20 --header="Select essential taps:" "${TAP_FLAGS[@]}")
+	TAPS=$(echo "$TAP_LIST" | gum choose --no-limit --height=20 --header="Select essential taps:" "${TAP_FLAGS[@]}")
 else
-    echo "(no taps to select)"
-    TAPS=""
+	echo "(no taps to select)"
+	TAPS=""
 fi
 
 echo ""
@@ -54,15 +54,15 @@ echo ""
 
 FORMULAE_FLAGS=()
 while IFS= read -r item; do
-    [[ -n "$item" ]] && FORMULAE_FLAGS+=("--selected=$item")
+	[[ -n "$item" ]] && FORMULAE_FLAGS+=("--selected=$item")
 done <<< "$(get_existing brew)"
 
 FORMULAE_LIST=$(brew leaves)
 if [[ -n "$FORMULAE_LIST" ]]; then
-    FORMULAE=$(echo "$FORMULAE_LIST" | gum choose --no-limit --height=30 --header="Select essential formulae:" "${FORMULAE_FLAGS[@]}")
+	FORMULAE=$(echo "$FORMULAE_LIST" | gum choose --no-limit --height=30 --header="Select essential formulae:" "${FORMULAE_FLAGS[@]}")
 else
-    echo "(no formulae to select)"
-    FORMULAE=""
+	echo "(no formulae to select)"
+	FORMULAE=""
 fi
 
 echo ""
@@ -71,15 +71,15 @@ echo ""
 
 CASKS_FLAGS=()
 while IFS= read -r item; do
-    [[ -n "$item" ]] && CASKS_FLAGS+=("--selected=$item")
+	[[ -n "$item" ]] && CASKS_FLAGS+=("--selected=$item")
 done <<< "$(get_existing cask)"
 
 CASKS_LIST=$(brew list --cask)
 if [[ -n "$CASKS_LIST" ]]; then
-    CASKS=$(echo "$CASKS_LIST" | gum choose --no-limit --height=20 --header="Select essential casks:" "${CASKS_FLAGS[@]}")
+	CASKS=$(echo "$CASKS_LIST" | gum choose --no-limit --height=20 --header="Select essential casks:" "${CASKS_FLAGS[@]}")
 else
-    echo "(no casks to select)"
-    CASKS=""
+	echo "(no casks to select)"
+	CASKS=""
 fi
 
 echo ""
@@ -88,17 +88,17 @@ echo ""
 
 MAS_FLAGS=()
 while IFS= read -r item; do
-    [[ -n "$item" ]] && MAS_FLAGS+=("--selected=$item")
+	[[ -n "$item" ]] && MAS_FLAGS+=("--selected=$item")
 done <<< "$(get_existing mas)"
 
 # Get mas apps as "name" for selection, store full info for later
 MAS_LIST=$(mas list | awk '{id=$1; $1=""; name=substr($0,2); gsub(/[[:space:]]*\([^)]*\)$/, "", name); print name}')
 
 if [[ -n "$MAS_LIST" ]]; then
-    MAS_SELECTED=$(echo "$MAS_LIST" | gum choose --no-limit --height=30 --header="Select essential Mac App Store apps:" "${MAS_FLAGS[@]}")
+	MAS_SELECTED=$(echo "$MAS_LIST" | gum choose --no-limit --height=30 --header="Select essential Mac App Store apps:" "${MAS_FLAGS[@]}")
 else
-    echo "(no Mac App Store apps to select)"
-    MAS_SELECTED=""
+	echo "(no Mac App Store apps to select)"
+	MAS_SELECTED=""
 fi
 
 # Write Brewfile.basics
@@ -111,44 +111,44 @@ EOF
 
 # Write taps first (required for some formulae/casks)
 if [[ -n "$TAPS" ]]; then
-    echo "# Taps" >> "$OUTPUT"
-    echo "$TAPS" | while read -r tap; do
-        [[ -n "$tap" ]] && echo "tap \"$tap\"" >> "$OUTPUT"
-    done
-    echo "" >> "$OUTPUT"
+	echo "# Taps" >> "$OUTPUT"
+	echo "$TAPS" | while read -r tap; do
+		[[ -n "$tap" ]] && echo "tap \"$tap\"" >> "$OUTPUT"
+	done
+	echo "" >> "$OUTPUT"
 fi
 
 # Write formulae
 if [[ -n "$FORMULAE" ]]; then
-    echo "# Formulae" >> "$OUTPUT"
-    echo "$FORMULAE" | while read -r pkg; do
-        [[ -n "$pkg" ]] && echo "brew \"$pkg\"" >> "$OUTPUT"
-    done
-    echo "" >> "$OUTPUT"
+	echo "# Formulae" >> "$OUTPUT"
+	echo "$FORMULAE" | while read -r pkg; do
+		[[ -n "$pkg" ]] && echo "brew \"$pkg\"" >> "$OUTPUT"
+	done
+	echo "" >> "$OUTPUT"
 fi
 
 # Write casks
 if [[ -n "$CASKS" ]]; then
-    echo "# Casks" >> "$OUTPUT"
-    echo "$CASKS" | while read -r pkg; do
-        [[ -n "$pkg" ]] && echo "cask \"$pkg\"" >> "$OUTPUT"
-    done
-    echo "" >> "$OUTPUT"
+	echo "# Casks" >> "$OUTPUT"
+	echo "$CASKS" | while read -r pkg; do
+		[[ -n "$pkg" ]] && echo "cask \"$pkg\"" >> "$OUTPUT"
+	done
+	echo "" >> "$OUTPUT"
 fi
 
 # Write mas apps (need to look up IDs)
 if [[ -n "$MAS_SELECTED" ]]; then
-    echo "# Mac App Store" >> "$OUTPUT"
-    echo "$MAS_SELECTED" | while read -r name; do
-        if [[ -n "$name" ]]; then
-            # Look up the ID for this app name
-            id=$(mas list | grep -F "$name" | awk '{print $1}' | head -1)
-            if [[ -n "$id" ]]; then
-                echo "mas \"$name\", id: $id" >> "$OUTPUT"
-            fi
-        fi
-    done
-    echo "" >> "$OUTPUT"
+	echo "# Mac App Store" >> "$OUTPUT"
+	echo "$MAS_SELECTED" | while read -r name; do
+		if [[ -n "$name" ]]; then
+			# Look up the ID for this app name
+			id=$(mas list | grep -F "$name" | awk '{print $1}' | head -1)
+			if [[ -n "$id" ]]; then
+				echo "mas \"$name\", id: $id" >> "$OUTPUT"
+			fi
+		fi
+	done
+	echo "" >> "$OUTPUT"
 fi
 
 echo ""
