@@ -1,0 +1,10 @@
+# Zsh plugins managed by Antidote
+# Run `antidote update` to update plugins
+
+# Essential
+zsh-users/zsh-autosuggestions      # Fish-like suggestions from history
+zsh-users/zsh-syntax-highlighting  # Color commands as you type
+zsh-users/zsh-completions          # Additional completions
+
+# Nice to have
+zsh-users/zsh-history-substring-search  # Better history search

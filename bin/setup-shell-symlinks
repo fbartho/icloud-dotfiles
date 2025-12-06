@@ -1,0 +1,76 @@
+#!/usr/bin/env bash
+#
+# setup-shell-symlinks
+# Creates symlinks for shell configuration files from dotfiles repo to home directory.
+# Safe to run multiple times - skips existing symlinks.
+#
+
+set -e
+
+DOTFILES_DIR="$HOME/.icloud-drive/dotfiles"
+
+# Ensure .icloud-drive symlink exists
+if [ ! -L "$HOME/.icloud-drive" ]; then
+    echo "Creating .icloud-drive symlink..."
+    ln -s "$HOME/Library/Mobile Documents/com~apple~CloudDocs" "$HOME/.icloud-drive"
+fi
+
+# Create ~/.config if it doesn't exist
+mkdir -p "$HOME/.config"
+
+# Helper function to create symlinks
+link_file() {
+    local src="$1"
+    local dest="$2"
+
+    if [ -L "$dest" ]; then
+        echo "✓ $dest (already linked)"
+    elif [ -e "$dest" ]; then
+        echo "⚠ $dest exists but is not a symlink - skipping (backup manually if needed)"
+    elif [ -e "$src" ] || [ -d "$src" ]; then
+        ln -s "$src" "$dest"
+        echo "→ $dest (created)"
+    else
+        echo "⏭ $dest (source not found: $src)"
+    fi
+}
+
+echo "Setting up shell symlinks..."
+echo ""
+
+# Shared shell config
+echo "=== Shared ==="
+link_file "$DOTFILES_DIR/.shell-common.sh" "$HOME/.shell-common.sh"
+link_file "$DOTFILES_DIR/.aliases.sh" "$HOME/.aliases.sh"
+link_file "$DOTFILES_DIR/.aliases.fish" "$HOME/.aliases.fish"
+link_file "$DOTFILES_DIR/.aliases.nu" "$HOME/.aliases.nu"
+
+# Zsh config files
+echo ""
+echo "=== Zsh ==="
+link_file "$DOTFILES_DIR/.zprofile" "$HOME/.zprofile"
+link_file "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
+link_file "$DOTFILES_DIR/.zsh_plugins.txt" "$HOME/.zsh_plugins.txt"
+
+# Fish config directory
+echo ""
+echo "=== Fish ==="
+link_file "$DOTFILES_DIR/config/fish" "$HOME/.config/fish"
+
+# Nushell config directory
+echo ""
+echo "=== Nushell ==="
+link_file "$DOTFILES_DIR/config/nushell" "$HOME/.config/nushell"
+
+# Starship config
+echo ""
+echo "=== Starship ==="
+link_file "$DOTFILES_DIR/config/starship.toml" "$HOME/.config/starship.toml"
+
+# Ghostty config
+echo ""
+echo "=== Ghostty ==="
+link_file "$DOTFILES_DIR/config/ghostty" "$HOME/.config/ghostty"
+
+echo ""
+echo "Done!"
