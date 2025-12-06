@@ -56,12 +56,19 @@ brew "wix/brew/applesimutils"
 
 # Casks
 cask "calendr"
+cask "figma"
+cask "fork"
 cask "ghostty"
+cask "keybase"
+cask "linear-linear"
 cask "lynx"
 cask "lynx-whiteboard"
+cask "notion"
 cask "rar"
 cask "syncthing"
 cask "syncthing-app"
+cask "visual-studio-code"
+cask "zed"
 
 # Mac App Store
 mas "BetterSnapTool", id: 417375580
