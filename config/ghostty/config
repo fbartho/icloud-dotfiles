@@ -1,0 +1,20 @@
+# Ghostty terminal configuration
+# Docs: https://ghostty.org/docs/config
+
+# Launch fish as the default shell
+command = /opt/homebrew/bin/fish
+
+# Font settings
+# font-family = "SF Mono"
+# font-size = 13
+
+# Window settings
+# window-padding-x = 10
+# window-padding-y = 10
+
+# Theme (uncomment to customize)
+# theme = "Solarized Dark"
+theme = dark:Solarized Dark,light:Apple System Colors Light
+
+# macOS specific
+macos-option-as-alt = true
