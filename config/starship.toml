@@ -2,13 +2,14 @@
 # Cross-shell prompt (zsh, fish, nushell)
 # Docs: https://starship.rs/config/
 
-# Prompt format
+# Prompt format - left side: status, directory, shell emoji
 format = """
 $status\
 $directory\
-$git_branch\
-$git_status\
 ${env_var.SHELL_EMOJI}"""
+
+# Right prompt - git info (reduces left prompt length)
+right_format = """$git_branch$git_status"""
 
 # Show success/error indicator (matches original PS1)
 [status]
@@ -36,8 +37,18 @@ default = '$ '
 truncation_length = 3
 truncation_symbol = '…/'
 truncate_to_repo = false
+# Fish-style: abbreviate parent dirs (e.g., ~/c/a/backend.nextjs)
+# fish_style_pwd_dir_length = 1 # we're using directory.substitutions instead for more control
 style = 'bold yellow'
 format = '[$path]($style) '
+
+[directory.substitutions]
+'/cooksatlas' = '/ca'
+'/agent-workspaces' = '/a-w'
+'/backend.' = '/b.'
+'/frontend.' = '/f.'
+'/fullstack.' = '/fs.'
+'/Mobile Documents/com~apple~CloudDocs' = '/.icloud-drive'
 
 [git_branch]
 format = '[($symbol$branch)]($style) '
