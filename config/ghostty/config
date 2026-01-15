@@ -14,7 +14,7 @@ command = /opt/homebrew/bin/fish
 
 # Theme (uncomment to customize)
 # theme = "Solarized Dark"
-theme = dark:Solarized Dark,light:Apple System Colors Light
+theme = dark:Solarized Dark Higher Contrast,light:Apple System Colors Light
 
 # macOS specific
 macos-option-as-alt = true
