@@ -25,7 +25,7 @@ set -gx SHELL_EMOJI $_shell_prompts[(random 1 (count $_shell_prompts))]
 if set -q AI_AGENT
     # Use node silently
     nvm use default --silent 2>/dev/null
-    corepack enable 2>/dev/null
+    command corepack enable &>/dev/null
     # Simple prompt
     function fish_prompt
         echo '$ '
@@ -110,11 +110,32 @@ ulimit -n 10000
 
 # Use default node version (nvm.fish handles this automatically)
 
-# Activate yarn berry
-corepack enable 2>/dev/null
+# Wrap nvm to enable corepack after node is activated
+functions -q nvm; and functions -c nvm _nvm_original
+function nvm --wraps=_nvm_original
+    _nvm_original $argv
+    set -l ret $status
+    # Enable corepack after nvm changes node version
+    command -q corepack; and command corepack enable &>/dev/null
+    return $ret
+end
 
 # Starship prompt
 starship init fish | source
 
 # Load aliases
 source ~/.aliases.fish
+
+# >>> conda initialize >>>
+# !! Contents within this block are managed by 'conda init' !!
+if test -f /Users/fbarthelemy/Code/miniconda3/bin/conda
+    eval /Users/fbarthelemy/Code/miniconda3/bin/conda "shell.fish" "hook" $argv | source
+else
+    if test -f "/Users/fbarthelemy/Code/miniconda3/etc/fish/conf.d/conda.fish"
+        . "/Users/fbarthelemy/Code/miniconda3/etc/fish/conf.d/conda.fish"
+    else
+        set -x PATH "/Users/fbarthelemy/Code/miniconda3/bin" $PATH
+    end
+end
+# <<< conda initialize <<<
+
