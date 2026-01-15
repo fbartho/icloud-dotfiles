@@ -1,0 +1,154 @@
+#!/usr/bin/env bash
+set -e
+
+# git-worktree-disconnect
+#
+# Convert a linked worktree into a standalone, independent repository.
+# Must be run from within a worktree (not the main repo).
+#
+# Usage:
+#   cd /path/to/worktree
+#   git worktree-disconnect [--force]
+#
+# Options:
+#   --force    Proceed even if there are uncommitted changes
+#
+# What it does:
+#   1. Copies the shared .git directory to make a standalone repo
+#   2. Preserves the current branch/HEAD state
+#   3. Removes this worktree from the parent repo's tracking
+#   4. Converts the .git file to a .git directory
+#
+# After running:
+#   - This directory is a fully independent git repository
+#   - The parent repo no longer knows about this worktree
+#   - Both repos remain at their respective branches
+
+usage() {
+    echo "usage: git worktree-disconnect [--force]"
+    echo ""
+    echo "Convert this linked worktree into a standalone repository."
+    echo ""
+    echo "Options:"
+    echo "  --force    Proceed even with uncommitted changes"
+    echo "  --help     Show this help message"
+}
+
+die() {
+    echo "error: $1" >&2
+    exit 1
+}
+
+# Parse arguments
+FORCE=false
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --force|-f)
+            FORCE=true
+            shift
+            ;;
+        --help|-h)
+            usage
+            exit 0
+            ;;
+        *)
+            usage
+            exit 1
+            ;;
+    esac
+done
+
+# Verify we're in a git repository
+git rev-parse --git-dir >/dev/null 2>&1 || die "not a git repository"
+
+# Check if we're in a worktree (has .git file) vs main repo (has .git directory)
+if [[ -d .git ]]; then
+    die "this is the main repository, not a worktree. Run from a linked worktree."
+fi
+
+if [[ ! -f .git ]]; then
+    die "cannot find .git file. Are you in a git worktree?"
+fi
+
+# Check for uncommitted changes (excluding untracked files)
+if [[ "$FORCE" != "true" ]]; then
+    if ! git diff --quiet 2>/dev/null || ! git diff --cached --quiet 2>/dev/null; then
+        die "uncommitted changes detected. Use --force to proceed anyway."
+    fi
+fi
+
+# Get paths
+WORKTREE_ROOT="$(pwd)"
+GIT_DIR="$(git rev-parse --git-dir)"           # e.g., /path/main/.git/worktrees/foo
+GIT_COMMON_DIR="$(git rev-parse --git-common-dir)"  # e.g., /path/main/.git
+CURRENT_BRANCH="$(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse HEAD)"
+
+# Extract worktree ID from GIT_DIR path
+WORKTREE_ID="$(basename "$GIT_DIR")"
+
+echo "Disconnecting worktree..."
+echo "  Worktree root:  $WORKTREE_ROOT"
+echo "  Current branch: $CURRENT_BRANCH"
+echo "  Parent repo:    $GIT_COMMON_DIR"
+echo ""
+
+# Create a new .git directory
+rm "$WORKTREE_ROOT/.git"
+mkdir "$WORKTREE_ROOT/.git"
+
+# Copy shared repository data
+echo "Copying repository data..."
+
+# Core directories and files that should be copied
+for item in objects refs hooks info config description; do
+    if [[ -e "$GIT_COMMON_DIR/$item" ]]; then
+        cp -R "$GIT_COMMON_DIR/$item" "$WORKTREE_ROOT/.git/"
+    fi
+done
+
+# Copy packed-refs if it exists
+if [[ -f "$GIT_COMMON_DIR/packed-refs" ]]; then
+    cp "$GIT_COMMON_DIR/packed-refs" "$WORKTREE_ROOT/.git/"
+fi
+
+# Copy shallow file if it exists (for shallow clones)
+if [[ -f "$GIT_COMMON_DIR/shallow" ]]; then
+    cp "$GIT_COMMON_DIR/shallow" "$WORKTREE_ROOT/.git/"
+fi
+
+# Copy the worktree-specific HEAD (this preserves our branch)
+if [[ -f "$GIT_DIR/HEAD" ]]; then
+    cp "$GIT_DIR/HEAD" "$WORKTREE_ROOT/.git/HEAD"
+else
+    # Fallback: write the current ref
+    echo "ref: refs/heads/$CURRENT_BRANCH" > "$WORKTREE_ROOT/.git/HEAD"
+fi
+
+# Copy worktree-specific refs if they exist
+for ref_dir in bisect rewritten worktree; do
+    if [[ -d "$GIT_DIR/refs/$ref_dir" ]]; then
+        mkdir -p "$WORKTREE_ROOT/.git/refs"
+        cp -R "$GIT_DIR/refs/$ref_dir" "$WORKTREE_ROOT/.git/refs/"
+    fi
+done
+
+# Copy index from worktree-specific location
+if [[ -f "$GIT_DIR/index" ]]; then
+    cp "$GIT_DIR/index" "$WORKTREE_ROOT/.git/"
+fi
+
+# Remove worktree entry from parent repository
+echo "Removing worktree entry from parent..."
+rm -rf "$GIT_COMMON_DIR/worktrees/$WORKTREE_ID"
+
+# Clean up empty worktrees directory if this was the last one
+if [[ -d "$GIT_COMMON_DIR/worktrees" ]] && [[ -z "$(ls -A "$GIT_COMMON_DIR/worktrees")" ]]; then
+    rmdir "$GIT_COMMON_DIR/worktrees"
+fi
+
+echo ""
+echo "Done! This directory is now a standalone repository."
+echo "Current branch: $(git symbolic-ref --short HEAD 2>/dev/null || git rev-parse --short HEAD)"
+echo ""
+echo "Note: The new repository shares history but is fully independent."
+echo "You may want to verify remotes with: git remote -v"

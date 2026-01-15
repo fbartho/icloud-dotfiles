@@ -1,0 +1,237 @@
+#!/usr/bin/env bash
+set -e
+
+# git-worktree-move-root
+#
+# Move the "root" repository (where the .git/ directory lives) to a different
+# worktree location. All other worktrees will be updated to point to the new root.
+#
+# Usage:
+#   # From the current root, specify new root:
+#   cd /path/to/current-root
+#   git worktree-move-root /path/to/target-worktree
+#
+#   # OR from a worktree, make it the new root:
+#   cd /path/to/worktree
+#   git worktree-move-root --to-here
+#
+# What it does:
+#   1. Moves the .git/ directory from old root to new root
+#   2. Converts old root to a linked worktree
+#   3. Updates all worktrees to point to the new location
+#
+# After running:
+#   - The new root has the .git/ directory
+#   - The old root and all other worktrees have .git files pointing to new root
+#   - All worktrees remain functional at their respective branches
+
+usage() {
+    echo "usage: git worktree-move-root <target-worktree>"
+    echo "       git worktree-move-root --to-here"
+    echo ""
+    echo "Move the root .git/ directory to a different worktree."
+    echo ""
+    echo "Modes:"
+    echo "  <target-worktree>  Run from root, move .git/ to specified worktree"
+    echo "  --to-here          Run from worktree, make it the new root"
+    echo ""
+    echo "Options:"
+    echo "  --help             Show this help message"
+}
+
+die() {
+    echo "error: $1" >&2
+    exit 1
+}
+
+# Check if a path is a linked worktree (has .git file)
+is_worktree() {
+    [[ -f "$1/.git" ]]
+}
+
+# Check if a path is the root repo (has .git directory)
+is_root() {
+    [[ -d "$1/.git" ]]
+}
+
+# Get absolute path (resolving symlinks)
+abspath() {
+    cd "$1" && pwd -P
+}
+
+# Parse arguments
+TO_HERE=false
+TARGET=""
+
+while [[ $# -gt 0 ]]; do
+    case "$1" in
+        --to-here)
+            TO_HERE=true
+            shift
+            ;;
+        --help|-h)
+            usage
+            exit 0
+            ;;
+        -*)
+            die "unknown option: $1"
+            ;;
+        *)
+            if [[ -n "$TARGET" ]]; then
+                die "too many arguments"
+            fi
+            TARGET="$1"
+            shift
+            ;;
+    esac
+done
+
+# Verify we're in a git repository
+git rev-parse --git-dir >/dev/null 2>&1 || die "not a git repository"
+
+if [[ "$TO_HERE" == "true" ]]; then
+    # --to-here mode: CWD must be a worktree
+    if [[ -n "$TARGET" ]]; then
+        die "--to-here cannot be used with a target path"
+    fi
+
+    if ! is_worktree "."; then
+        die "current directory is not a linked worktree. Use without --to-here from the root."
+    fi
+
+    NEW_ROOT="$(pwd)"
+    GIT_COMMON_DIR="$(git rev-parse --git-common-dir)"
+    OLD_ROOT="$(dirname "$GIT_COMMON_DIR")"
+
+else
+    # Target mode: CWD must be root, TARGET must be a worktree
+    if [[ -z "$TARGET" ]]; then
+        usage
+        exit 1
+    fi
+
+    if ! is_root "."; then
+        die "current directory is not the root repository. Use --to-here from a worktree."
+    fi
+
+    if [[ ! -d "$TARGET" ]]; then
+        die "target does not exist: $TARGET"
+    fi
+
+    if ! is_worktree "$TARGET"; then
+        die "target is not a linked worktree: $TARGET"
+    fi
+
+    OLD_ROOT="$(pwd)"
+    NEW_ROOT="$(abspath "$TARGET")"
+fi
+
+# Resolve to absolute paths
+OLD_ROOT="$(abspath "$OLD_ROOT")"
+NEW_ROOT="$(abspath "$NEW_ROOT")"
+OLD_GIT_DIR="$OLD_ROOT/.git"
+NEW_GIT_DIR="$NEW_ROOT/.git"
+
+# Get the worktree ID for the new root
+NEW_ROOT_WORKTREE_ID="$(basename "$(cat "$NEW_ROOT/.git" | sed 's/gitdir: //')")"
+
+echo "Moving repository root..."
+echo "  From: $OLD_ROOT"
+echo "  To:   $NEW_ROOT"
+echo ""
+
+# Get all worktrees before we start moving things
+WORKTREES_DIR="$OLD_GIT_DIR/worktrees"
+WORKTREE_IDS=()
+if [[ -d "$WORKTREES_DIR" ]]; then
+    for wt_dir in "$WORKTREES_DIR"/*/; do
+        if [[ -d "$wt_dir" ]]; then
+            WORKTREE_IDS+=("$(basename "$wt_dir")")
+        fi
+    done
+fi
+
+# Save the current branch of the old root
+OLD_ROOT_BRANCH="$(cd "$OLD_ROOT" && git symbolic-ref --short HEAD 2>/dev/null || git rev-parse HEAD)"
+
+# Step 1: Create worktree entry for old root (it will become a linked worktree)
+echo "Creating worktree entry for old root..."
+OLD_ROOT_ID="old-root-$$"  # Use PID to make unique
+mkdir -p "$OLD_GIT_DIR/worktrees/$OLD_ROOT_ID"
+
+# Save the old root's HEAD
+cp "$OLD_GIT_DIR/HEAD" "$OLD_GIT_DIR/worktrees/$OLD_ROOT_ID/HEAD"
+
+# Save gitdir pointing to old root location
+echo "$OLD_ROOT/.git" > "$OLD_GIT_DIR/worktrees/$OLD_ROOT_ID/gitdir"
+
+# Create commondir - critical for git to find the shared repo
+# Path is relative from worktrees/<id>/ up to .git/ (two levels up)
+echo "../.." > "$OLD_GIT_DIR/worktrees/$OLD_ROOT_ID/commondir"
+
+# Copy index if it exists
+if [[ -f "$OLD_GIT_DIR/index" ]]; then
+    cp "$OLD_GIT_DIR/index" "$OLD_GIT_DIR/worktrees/$OLD_ROOT_ID/index"
+fi
+
+# Create logs directory for reflog
+mkdir -p "$OLD_GIT_DIR/worktrees/$OLD_ROOT_ID/logs"
+if [[ -f "$OLD_GIT_DIR/logs/HEAD" ]]; then
+    cp "$OLD_GIT_DIR/logs/HEAD" "$OLD_GIT_DIR/worktrees/$OLD_ROOT_ID/logs/HEAD"
+fi
+
+# Create refs directory (for per-worktree refs like bisect)
+mkdir -p "$OLD_GIT_DIR/worktrees/$OLD_ROOT_ID/refs"
+
+# Step 2: Set up HEAD for the new root (use the worktree's HEAD that's becoming root)
+echo "Setting up HEAD for new root..."
+NEW_ROOT_WT_DIR="$OLD_GIT_DIR/worktrees/$NEW_ROOT_WORKTREE_ID"
+if [[ -f "$NEW_ROOT_WT_DIR/HEAD" ]]; then
+    cp "$NEW_ROOT_WT_DIR/HEAD" "$OLD_GIT_DIR/HEAD"
+fi
+
+# Step 3: Remove the new root from worktrees (it will become the main repo)
+echo "Removing worktree entry for new root..."
+rm -rf "$OLD_GIT_DIR/worktrees/$NEW_ROOT_WORKTREE_ID"
+
+# Step 4: Move .git directory to new location
+echo "Moving .git directory..."
+rm "$NEW_GIT_DIR"  # Remove the .git file
+mv "$OLD_GIT_DIR" "$NEW_GIT_DIR"  # Move the actual .git directory
+
+# Step 5: Create .git file at old root pointing to new location
+echo "Creating .git file at old root..."
+echo "gitdir: $NEW_GIT_DIR/worktrees/$OLD_ROOT_ID" > "$OLD_ROOT/.git"
+
+# Step 6: Update gitdir files for all worktrees to reflect new location
+echo "Updating worktree references..."
+if [[ -d "$NEW_GIT_DIR/worktrees" ]]; then
+    for wt_id in "$NEW_GIT_DIR/worktrees"/*/; do
+        if [[ -d "$wt_id" ]]; then
+            gitdir_file="$wt_id/gitdir"
+            if [[ -f "$gitdir_file" ]]; then
+                wt_path="$(cat "$gitdir_file")"
+                # The gitdir file contains the path to the worktree's .git file
+                # We need to update the worktree's .git file to point to new location
+                wt_id_name="$(basename "$wt_id")"
+
+                # Handle the case where wt_path might be the old-style path ending in .git
+                wt_root="${wt_path%/.git}"
+                if [[ -f "$wt_root/.git" ]]; then
+                    echo "gitdir: $NEW_GIT_DIR/worktrees/$wt_id_name" > "$wt_root/.git"
+                fi
+            fi
+        fi
+    done
+fi
+
+# Also update the old root's .git file (already done in step 4, but make sure gitdir is correct)
+echo "gitdir: $NEW_GIT_DIR/worktrees/$OLD_ROOT_ID" > "$OLD_ROOT/.git"
+
+echo ""
+echo "Done! Repository root moved successfully."
+echo ""
+echo "New root:     $NEW_ROOT"
+echo "Old root:     $OLD_ROOT (now a linked worktree)"
+echo ""
+echo "Verify with: git worktree list"
