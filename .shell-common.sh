@@ -117,3 +117,12 @@ if command -v go_use_aliases >/dev/null 2>&1; then
     . "$(which go_use_aliases)"
     . "$(which go_use_fixup_env)"
 fi
+
+# conda python ML Model framework (lazy-loaded)
+# Defines a stub function that bootstraps conda on first use
+conda() {
+    unset -f conda
+    source "$HOME/Code/miniconda3/bin/activate"
+    conda init --all >/dev/null 2>&1
+    conda "$@"
+}
