@@ -41,6 +41,13 @@ export CODE_DIR="$HOME/Code"
 export ICLOUD_DRIVE="$HOME/.icloud-drive"
 export GPG_TTY=$(tty)
 
+# Obsidian Personal Management Vault:
+export EBRAIN_ABSOLUTE_ROOT="/Users/fbarthelemy/Library/Mobile Documents/iCloud~md~obsidian/Documents/Ebrain"
+# export EBRAIN_ABSOLUTE_ROOT="/Users/fbarthelemy/.ebrain-vault/Ebrain"
+export EBRAIN_ROOT="/Users/fbarthelemy/.ebrain-vault"
+export EBRAIN_SCRIPTS="${EBRAIN_ROOT}/.scripts"
+export EBRAIN_CLAUDE_PLUGIN="${EBRAIN_SCRIPTS}/claude-plugin"
+
 # NVM (Node Version Manager)
 export NVM_DIR="$HOME/.nvm"
 unset npm_config_prefix
@@ -63,6 +70,7 @@ fi
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
 # PATH additions
+PATH="$EBRAIN_SCRIPTS/bin:$PATH"
 PATH="$HOME/.bin:$PATH"
 PATH="$HOME/.local/bin:$PATH"
 PATH="$CODE_DIR/go_use/bin:$PATH"

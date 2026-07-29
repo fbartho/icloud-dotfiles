@@ -72,6 +72,7 @@ else if test -d "$HOME/.cargo/bin"
 end
 
 # PATH additions
+fish_add_path "$HOME/.ebrain-vault/.scripts/bin"
 fish_add_path "$HOME/.bin"
 fish_add_path "$HOME/.local/bin"
 fish_add_path "$CODE_DIR/go_use/bin"

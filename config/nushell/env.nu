@@ -36,6 +36,7 @@ $env.GPG_TTY = (do { ^tty } | complete | get stdout | str trim)
 $env.NVM_DIR = $"($env.HOME)/.nvm"
 
 # PATH additions
+$env.PATH = ($env.PATH | prepend $"($env.HOME)/.ebrain-vault/.scripts/bin")
 $env.PATH = ($env.PATH | prepend $"($env.HOME)/.bin")
 $env.PATH = ($env.PATH | prepend $"($env.HOME)/.local/bin")
 $env.PATH = ($env.PATH | prepend "/usr/local/sbin")

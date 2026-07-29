@@ -41,4 +41,4 @@ SETUVAR fish_pager_color_selected_background:\x2dr
 SETUVAR fish_pager_color_selected_completion:\x1d
 SETUVAR fish_pager_color_selected_description:\x1d
 SETUVAR fish_pager_color_selected_prefix:\x1d
-SETUVAR fish_user_paths:/usr/local/opt/openssl/bin\x1e/Users/fbarthelemy/Library/Android/sdk/platform\x2dtools\x1e/Users/fbarthelemy/Library/Android/sdk/tools/bin\x1e/Users/fbarthelemy/Library/Android/sdk/tools\x1e/Users/fbarthelemy/Library/Android/sdk/emulator\x1e/usr/local/sbin\x1e/Users/fbarthelemy/\x2elocal/bin\x1e/Users/fbarthelemy/\x2ebin\x1e/Users/fbarthelemy/\x2ecargo/bin
+SETUVAR fish_user_paths:/Users/fbarthelemy/\x2eebrain\x2dvault/\x2escripts/bin\x1e/usr/local/opt/openssl/bin\x1e/Users/fbarthelemy/Library/Android/sdk/platform\x2dtools\x1e/Users/fbarthelemy/Library/Android/sdk/tools/bin\x1e/Users/fbarthelemy/Library/Android/sdk/tools\x1e/Users/fbarthelemy/Library/Android/sdk/emulator\x1e/usr/local/sbin\x1e/Users/fbarthelemy/\x2elocal/bin\x1e/Users/fbarthelemy/\x2ebin\x1e/Users/fbarthelemy/\x2ecargo/bin
