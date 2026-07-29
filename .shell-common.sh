@@ -76,6 +76,9 @@ PATH="$HOME/.local/bin:$PATH"
 PATH="$CODE_DIR/go_use/bin:$PATH"
 PATH="/usr/local/sbin:$PATH"
 
+# TeX Live (BasicTeX via Homebrew)
+[ -d "/Library/TeX/texbin" ] && PATH="$PATH:/Library/TeX/texbin"
+
 # Android SDK
 export ANDROID_HOME="$HOME/Library/Android/sdk"
 if [ -d "$ANDROID_HOME" ]; then
