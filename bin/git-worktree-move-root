@@ -2,6 +2,7 @@
 set -e
 
 # git-worktree-move-root
+# (often used as git worktree-move-root)
 #
 # Move the "root" repository (where the .git/ directory lives) to a different
 # worktree location. All other worktrees will be updated to point to the new root.
