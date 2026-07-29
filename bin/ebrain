@@ -1,0 +1,3 @@
+#!/bin/bash
+# Trampoline to ebrain CLI in the vault
+exec "/Users/fbarthelemy/.ebrain-vault/.scripts/ebrain/run" "$@"

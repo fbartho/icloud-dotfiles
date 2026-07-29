@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+# claude-tasks - Run Claude Code with a specific task list ID
+#
+# Usage: claude-tasks <task-list-id> [claude-args...]
+#
+# Sets CLAUDE_CODE_TASK_LIST_ID environment variable and execs claude
+
+if [[ $# -lt 1 ]]; then
+    echo "Usage: claude-tasks <task-list-id> [claude-args...]" >&2
+    exit 1
+fi
+
+export CLAUDE_CODE_TASK_LIST_ID="$1"
+shift
+
+exec claude "$@"

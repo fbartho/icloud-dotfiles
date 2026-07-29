@@ -1,0 +1,16 @@
+#!/bin/bash
+# Execute a command in each directory under the current working directory
+
+set -e
+
+if [ $# -eq 0 ]; then
+    echo "Usage: each-dir <command> [args...]"
+    echo "Execute a command in each directory under CWD"
+    exit 1
+fi
+
+for dir in */; do
+    [ -d "$dir" ] || continue
+    echo "==> $dir"
+    (cd "$dir" && "$@")
+done

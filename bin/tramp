@@ -1,0 +1,6 @@
+#!/bin/bash
+# Trampoline - delegates to cargo run
+set -e
+
+exec cargo run --quiet --manifest-path "/Users/fbarthelemy/Code/tramp/Cargo.toml" --bin tramp -- "$@"
+pwd
