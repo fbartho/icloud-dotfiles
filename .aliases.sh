@@ -105,8 +105,6 @@ alias gg="git grep -n"
 
 alias hub="git"
 
-alias gitup="open -a GitUp `git rev-parse --show-toplevel`"
-
 alias broforce="sudo /Users/fbarthelemy/Library/Application\ Support/Steam/SteamApps/common/Broforce/Broforce.app/Contents/MacOS/Broforce"
 alias pa="sudo ~/Library/Application\ Support/Steam/SteamApps/common/Planetary\ Annihilation/PA.app/Contents/MacOS/PA"
 
