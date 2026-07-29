@@ -3,3 +3,13 @@
 /.vim/.netrwhist
 *.dmg
 Brewfile.all
+
+# Machine-local Claude Code settings
+/.claude/settings.local.json
+
+# Local binaries / archives
+/bin/rsvg-convert
+/bin/gitLocalBranch.zip
+
+# Cooks Atlas trampoline — kept locally, no longer active
+/bin/supe
