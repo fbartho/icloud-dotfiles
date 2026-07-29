@@ -126,3 +126,8 @@ alias hca_kubectl='HTTPS_PROXY=localhost:8888 winpty kubectl'
 if ! command -v tac &> /dev/null; then
     alias tac="tail -r"
 fi
+
+# Claude Code
+alias claude-start-day='claude --permission-mode acceptEdits --init "/start-day"'
+alias laude="claude"
+alias aude="claude"

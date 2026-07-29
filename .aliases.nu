@@ -85,3 +85,8 @@ def openx [] {
 
 alias xcp = openx
 def podxcp [] { pod install; openx }
+
+# Claude Code
+alias claude-start-day = claude --permission-mode acceptEdits --init "/start-day"
+alias laude = claude
+alias aude = claude

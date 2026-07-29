@@ -82,3 +82,8 @@ alias strip_color="sed -e 's/\x1b\[[0-9;]*m//g'"
 if not command -v tac >/dev/null 2>&1
     alias tac="tail -r"
 end
+
+# Claude Code
+alias claude-start-day='claude --permission-mode acceptEdits --init "/start-day"'
+alias laude="claude"
+alias aude="claude"
