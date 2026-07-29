@@ -18,6 +18,19 @@ HISTFILE=~/.zsh_history
 HISTSIZE=10000
 SAVEHIST=10000
 
+# Keep `claude --init` invocations out of the history file — they often carry
+# long personal prompts. The bare start-day form is the one allowed exception.
+# Return 2 = kept in this session's memory (up-arrow works), never written to disk.
+_hist_ban_claude_init() {
+    local line=${1%$'\n'}
+    if [[ $line == 'claude --init'* && $line != 'claude --init "/start-day"' ]]; then
+        return 2
+    fi
+    return 0
+}
+autoload -Uz add-zsh-hook
+add-zsh-hook zshaddhistory _hist_ban_claude_init
+
 # ---------------------
 # Completions
 # ---------------------
