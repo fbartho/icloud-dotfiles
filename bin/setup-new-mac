@@ -107,6 +107,17 @@ else
 	exit 1
 fi
 
+# Install Rust toolchain if needed
+echo ""
+echo "=== Rust toolchain ==="
+if command -v rustc &>/dev/null; then
+	echo "✓ Rust toolchain installed"
+else
+	echo "Installing Rust via rustup..."
+	curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+	source "$HOME/.cargo/env"
+fi
+
 # Add shells to /etc/shells if needed
 echo ""
 echo "=== Registering shells ==="
