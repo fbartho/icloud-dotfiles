@@ -69,6 +69,12 @@ fi
 # Rust/Cargo
 [ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
 
+# Espressif Xtensa Rust toolchain (espup): on-demand, because the export sets LIBCLANG_PATH globally
+export ESPUP_EXPORT_FILE="$HOME/.config/espup/export-esp.sh"
+esp-env() {
+    . "$ESPUP_EXPORT_FILE"
+}
+
 # PATH additions
 PATH="$EBRAIN_SCRIPTS/bin:$PATH"
 PATH="$HOME/.bin:$PATH"

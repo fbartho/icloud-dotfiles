@@ -71,6 +71,13 @@ else if test -d "$HOME/.cargo/bin"
     fish_add_path "$HOME/.cargo/bin"
 end
 
+# Espressif Xtensa Rust toolchain (espup): on-demand; the export file is sh syntax, so evaluate it in sh
+set -gx ESPUP_EXPORT_FILE "$HOME/.config/espup/export-esp.sh"
+function esp-env
+    set -gx LIBCLANG_PATH (sh -c ". $ESPUP_EXPORT_FILE; printf %s \"\$LIBCLANG_PATH\"")
+    fish_add_path (sh -c ". $ESPUP_EXPORT_FILE; printf %s \"\$PATH\"" | tr ':' '\n' | grep '/.rustup/toolchains/esp/')
+end
+
 # PATH additions
 fish_add_path "$HOME/.ebrain-vault/.scripts/bin"
 fish_add_path "$HOME/.bin"
