@@ -1,7 +1,7 @@
 #!/bin/bash
 
-ALT_XCODE_NAME="27-Beta3"
-ALT_XCODE_GREP="27-Beta3"
+ALT_XCODE_NAME="27-RC"
+ALT_XCODE_GREP="27-RC"
 
 current_path=$(xcode-select -p)
 if [ "$current_path" == "/Library/Developer/CommandLineTools" ]; then
