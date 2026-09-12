@@ -1,0 +1,22 @@
+#!/bin/sh
+# Rejects commit messages carrying AI-attribution boilerplate (Co-Authored-By
+# trailers, "Generated with Claude" footers, etc). The pattern list lives in
+# attribution-patterns.sh so every consumer (this hook, the Claude Code
+# PreToolUse guard) reads the same source.
+
+HOOK_DIR=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+# shellcheck source=./attribution-patterns.sh
+. "$HOOK_DIR/attribution-patterns.sh"
+
+MSG_FILE="$1"
+
+if result=$(attribution_scan "$MSG_FILE"); then
+	pattern=$(printf '%s' "$result" | cut -d'|' -f1)
+	line=$(printf '%s' "$result" | cut -d'|' -f2-)
+	echo "commit-msg: rejected — AI attribution boilerplate matched pattern '$pattern'" >&2
+	echo "commit-msg: offending line: $line" >&2
+	exit 1
+fi
+
+HOOK_NAME=commit-msg
+. "$HOOK_DIR/_delegate.sh" "$@"

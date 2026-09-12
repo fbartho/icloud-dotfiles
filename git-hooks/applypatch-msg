@@ -1,0 +1,7 @@
+#!/bin/sh
+# Delegates to the repository-local applypatch-msg hook under a global core.hooksPath.
+# This name carries no global check; only commit-msg does.
+
+HOOK_DIR=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+HOOK_NAME=applypatch-msg
+. "$HOOK_DIR/_delegate.sh" "$@"
