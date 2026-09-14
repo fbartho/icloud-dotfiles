@@ -8,14 +8,13 @@
 # Shims that need to run logic before delegating (commit-msg) do so above
 # the source line and exit non-zero themselves on rejection.
 
-# `git rev-parse --git-path hooks/<name>` resolves under core.hooksPath once
-# that is set globally, which would point back at this shim and recurse
-# forever. The literal .git/hooks directory ignores core.hooksPath, so
-# GIT_DIR is read directly here instead.
-GIT_DIR=$(git rev-parse --git-dir 2>/dev/null)
-LOCAL_HOOK="$GIT_DIR/hooks/$HOOK_NAME"
+# `git rev-parse --git-path hooks/<name>` resolves under core.hooksPath,
+# which points back at this shim. The common dir's hooks/ ignores
+# core.hooksPath, and in a worktree only the common dir has a hooks/.
+LOCAL_GIT_DIR=$(git rev-parse --git-common-dir 2>/dev/null)
+LOCAL_HOOK="$LOCAL_GIT_DIR/hooks/$HOOK_NAME"
 
-if [ -n "$GIT_DIR" ] && [ -f "$LOCAL_HOOK" ] && [ -x "$LOCAL_HOOK" ]; then
+if [ -n "$LOCAL_GIT_DIR" ] && [ -f "$LOCAL_HOOK" ] && [ -x "$LOCAL_HOOK" ]; then
 	exec "$LOCAL_HOOK" "$@"
 fi
 
