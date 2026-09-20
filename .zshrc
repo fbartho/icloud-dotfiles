@@ -76,3 +76,6 @@ if [ -f '/Users/fbarthelemy/Downloads/google-cloud-sdk/path.zsh.inc' ]; then . '
 
 # The next line enables shell command completion for gcloud.
 if [ -f '/Users/fbarthelemy/Downloads/google-cloud-sdk/completion.zsh.inc' ]; then . '/Users/fbarthelemy/Downloads/google-cloud-sdk/completion.zsh.inc'; fi
+
+# bun completions
+[ -s "/Users/fbarthelemy/.bun/_bun" ] && source "/Users/fbarthelemy/.bun/_bun"
