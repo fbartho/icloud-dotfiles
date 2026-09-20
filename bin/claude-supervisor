@@ -1,0 +1,3 @@
+#!/bin/bash
+# Trampoline to claude-supervisor in the vault
+exec "/Users/fbarthelemy/Library/Mobile Documents/iCloud~md~obsidian/Documents/Ebrain/.scripts/bin/claude-supervisor" "$@"
