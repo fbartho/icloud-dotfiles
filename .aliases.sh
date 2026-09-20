@@ -127,5 +127,28 @@ fi
 
 # Claude Code
 alias claude-start-day='claude --permission-mode acceptEdits --init "/start-day"'
-alias laude="claude"
-alias aude="claude"
+
+# Route interactive `claude` launches through the ebrain system-prompt compiler
+# (`ebrain prompt launch`): official default + vault patches, delivered via
+# --system-prompt-file. Passes through unwrapped for -p/--print, subcommands,
+# and explicit prompt flags; any compile failure launches stock and reports to
+# the vault inbox. Escape hatch: `command claude` bypasses the wrapper.
+claude() {
+	if command -v ebrain >/dev/null 2>&1; then
+		ebrain prompt launch "$@"
+	else
+		command claude "$@"
+	fi
+}
+
+# Account profiles. Each points CLAUDE_CONFIG_DIR at its own directory, which
+# gives it its own login — Claude Code suffixes the Keychain service name with
+# a hash of the config directory. Config is symlinked back to ~/.claude by
+# `setup-claude-profile`, so only the account differs.
+aclaude() {
+	CLAUDE_CONFIG_DIR="$HOME/.claude-a" claude "$@"
+}
+
+bclaude() {
+	CLAUDE_CONFIG_DIR="$HOME/.claude-b" claude "$@"
+}

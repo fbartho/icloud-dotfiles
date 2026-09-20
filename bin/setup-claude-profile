@@ -1,0 +1,104 @@
+#!/usr/bin/env bash
+#
+# setup-claude-profile
+# Creates ~/.claude-<tag>, a Claude Code config directory that shares everything
+# with ~/.claude except its login. Safe to run multiple times.
+#
+# Per-account (never linked): .claude.json holds oauthAccount, and credentials
+# live in the login Keychain under a service name derived from the config
+# directory. Everything else is linked back to ~/.claude.
+#
+
+set -euo pipefail
+
+PRIMARY="$HOME/.claude"
+
+usage() {
+	cat <<-EOF
+		Usage: setup-claude-profile <tag> [<tag>…]
+
+		Creates ~/.claude-<tag> for each tag, sharing config with ~/.claude.
+
+		  setup-claude-profile a b      # creates ~/.claude-a and ~/.claude-b
+
+		Log in to a profile with:  aclaude /login
+		Or copy this session's login with:  claude-copy-login <tag>
+	EOF
+}
+
+if [ $# -eq 0 ]; then
+	usage
+	exit 1
+fi
+
+if [ ! -d "$PRIMARY" ]; then
+	echo "Error: $PRIMARY does not exist; run claude once first." >&2
+	exit 1
+fi
+
+# Shared config. A directory here is linked whole, so new files inside it appear
+# in every profile without re-running this script.
+SHARED_ENTRIES=(
+	CLAUDE.md
+	settings.json
+	.mcp.json
+	commands
+	skills
+	output-styles
+	plugins
+)
+
+link_entry() {
+	local src="$1"
+	local dest="$2"
+	local name
+	name="$(basename "$dest")"
+
+	if [ ! -e "$src" ]; then
+		printf '  ⏭ %-18s (not present in ~/.claude)\n' "$name"
+		return
+	fi
+
+	if [ -L "$dest" ]; then
+		if [ "$(readlink "$dest")" = "$src" ]; then
+			printf '  ✓ %-18s (already linked)\n' "$name"
+		else
+			ln -sfn "$src" "$dest"
+			printf '  ↻ %-18s (relinked)\n' "$name"
+		fi
+		return
+	fi
+
+	if [ -e "$dest" ]; then
+		printf '  ⚠ %-18s exists and is not a symlink — left alone\n' "$name"
+		return
+	fi
+
+	ln -s "$src" "$dest"
+	printf '  → %-18s (linked)\n' "$name"
+}
+
+for tag in "$@"; do
+	profile="$HOME/.claude-$tag"
+	echo "=== $profile ==="
+
+	mkdir -p "$profile"
+
+	for entry in "${SHARED_ENTRIES[@]}"; do
+		link_entry "$PRIMARY/$entry" "$profile/$entry"
+	done
+
+	if [ -e "$profile/.claude.json" ]; then
+		echo "  · .claude.json         (per-account, kept)"
+	else
+		echo "  · .claude.json         (per-account, created on first login)"
+	fi
+
+	echo
+done
+
+cat <<-EOF
+	Done. Next:
+	  aclaude /login        log the profile in to its own account
+	  claude-copy-login a   copy an existing login into ~/.claude-a
+EOF

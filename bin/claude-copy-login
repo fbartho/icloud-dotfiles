@@ -1,0 +1,198 @@
+#!/usr/bin/env bash
+#
+# claude-copy-login
+# Copies a Claude Code login from one config directory's Keychain item to
+# another's, so a profile can reuse an account already signed in elsewhere.
+#
+# Claude Code derives its Keychain service name from the config directory:
+# unsuffixed when CLAUDE_CONFIG_DIR is unset, otherwise
+# "Claude Code-credentials-<first 8 hex of sha256(dir)>". This script computes
+# both names and pipes the secret between them without printing it.
+#
+
+set -euo pipefail
+
+usage() {
+	cat <<-EOF
+		Usage: claude-copy-login <dest-tag> [--from <source-tag>]
+
+		Copies the login for ~/.claude (or ~/.claude-<source-tag>) into
+		~/.claude-<dest-tag>.
+
+		  claude-copy-login a              # from the default ~/.claude
+		  claude-copy-login b --from a     # from ~/.claude-a
+		  claude-copy-login a --force      # overwrite without asking
+
+		The destination profile must already exist; create it with
+		setup-claude-profile <tag>.
+	EOF
+}
+
+DEST_TAG=""
+SRC_TAG=""
+FORCE=0
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+		-h|--help) usage; exit 0 ;;
+		-f|--force) FORCE=1; shift ;;
+		--from) SRC_TAG="${2:-}"; shift 2 ;;
+		-*) echo "Unknown option: $1" >&2; usage >&2; exit 1 ;;
+		*)
+			if [ -n "$DEST_TAG" ]; then
+				echo "Unexpected argument: $1" >&2
+				exit 1
+			fi
+			DEST_TAG="$1"; shift ;;
+	esac
+done
+
+if [ -z "$DEST_TAG" ]; then
+	usage >&2
+	exit 1
+fi
+
+# Claude Code normalizes the directory to NFC before hashing.
+service_name_for() {
+	local dir="$1"
+	if [ -z "$dir" ]; then
+		echo "Claude Code-credentials"
+		return
+	fi
+	python3 -c '
+import hashlib, sys, unicodedata
+d = unicodedata.normalize("NFC", sys.argv[1])
+print("Claude Code-credentials-" + hashlib.sha256(d.encode("utf-8")).hexdigest()[:8])
+' "$dir"
+}
+
+if [ -n "$SRC_TAG" ]; then
+	SRC_DIR="$HOME/.claude-$SRC_TAG"
+	SRC_LABEL="~/.claude-$SRC_TAG"
+else
+	SRC_DIR=""
+	SRC_LABEL="~/.claude (default)"
+fi
+
+DEST_DIR="$HOME/.claude-$DEST_TAG"
+DEST_LABEL="~/.claude-$DEST_TAG"
+
+if [ ! -d "$DEST_DIR" ]; then
+	echo "Error: $DEST_DIR does not exist. Run: setup-claude-profile $DEST_TAG" >&2
+	exit 1
+fi
+
+SRC_SERVICE="$(service_name_for "$SRC_DIR")"
+DEST_SERVICE="$(service_name_for "$DEST_DIR")"
+ACCT="$USER"
+
+echo "From: $SRC_LABEL"
+echo "  To: $DEST_LABEL"
+echo
+
+if ! security find-generic-password -s "$SRC_SERVICE" -a "$ACCT" >/dev/null 2>&1; then
+	echo "Error: no login found for $SRC_LABEL." >&2
+	echo "Sign in there first, then re-run." >&2
+	exit 1
+fi
+
+if [ "$FORCE" -eq 0 ] && security find-generic-password -s "$DEST_SERVICE" -a "$ACCT" >/dev/null 2>&1; then
+	if [ ! -t 0 ]; then
+		echo "Error: $DEST_LABEL already has a login. Re-run with --force to replace it." >&2
+		exit 1
+	fi
+	printf '%s already has a login. Overwrite it? [y/N] ' "$DEST_LABEL"
+	read -r reply
+	case "$reply" in
+		[yY]|[yY][eE][sS]) ;;
+		*) echo "Canceled."; exit 0 ;;
+	esac
+fi
+
+# -X takes the secret hex-encoded, which keeps the credential JSON clear of
+# shell quoting. A bare `-w` prompts interactively rather than reading a pipe,
+# which silently stores the wrong value; `security -i` batch mode wraps the
+# ~4KB hex string across lines and misreads the remainder as a command.
+copy_credential() {
+	python3 - "$SRC_SERVICE" "$DEST_SERVICE" "$ACCT" <<'PY'
+import subprocess, sys
+
+src_service, dest_service, acct = sys.argv[1], sys.argv[2], sys.argv[3]
+
+read = subprocess.run(
+    ["security", "find-generic-password", "-s", src_service, "-a", acct, "-w"],
+    capture_output=True,
+)
+if read.returncode != 0:
+    sys.exit("could not read the source credential")
+
+secret = read.stdout.rstrip(b"\n")
+if not secret:
+    sys.exit("the source credential is empty")
+
+write = subprocess.run(
+    [
+        "security", "add-generic-password",
+        "-U",
+        "-a", acct,
+        "-s", dest_service,
+        "-D", "application password",
+        "-X", secret.hex(),
+    ],
+    capture_output=True,
+)
+if write.returncode != 0:
+    sys.exit("keychain write failed: " + write.stderr.decode().strip())
+PY
+}
+
+if ! copy_credential; then
+	echo "Error: copy failed." >&2
+	exit 1
+fi
+
+echo "Copied. $DEST_LABEL now shares the account signed in at $SRC_LABEL."
+
+# oauthAccount lives here and must match the credential just copied.
+SRC_JSON="${SRC_DIR:-$HOME/.claude}/.claude.json"
+DEST_JSON="$DEST_DIR/.claude.json"
+
+if [ -f "$SRC_JSON" ]; then
+	python3 - "$SRC_JSON" "$DEST_JSON" <<'PY'
+import json, os, sys
+
+src_path, dest_path = sys.argv[1], sys.argv[2]
+
+with open(src_path) as fh:
+    src = json.load(fh)
+
+dest = {}
+if os.path.exists(dest_path):
+    try:
+        with open(dest_path) as fh:
+            dest = json.load(fh)
+    except (OSError, ValueError):
+        dest = {}
+
+# Identity and onboarding state only; project history stays per-profile.
+carry = [
+    "oauthAccount",
+    "hasCompletedOnboarding",
+    "lastOnboardingVersion",
+    "subscriptionNoticeCount",
+    "hasAvailableSubscription",
+]
+copied = [k for k in carry if k in src]
+for key in copied:
+    dest[key] = src[key]
+
+with open(dest_path, "w") as fh:
+    json.dump(dest, fh, indent=2)
+os.chmod(dest_path, 0o600)
+
+print("  identity keys carried over: " + (", ".join(copied) or "none"))
+PY
+fi
+
+echo
+echo "Verify with:  CLAUDE_CONFIG_DIR=$DEST_DIR claude -p 'say hi'"

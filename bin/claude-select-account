@@ -1,0 +1,349 @@
+#!/usr/bin/env bash
+#
+# claude-select-account
+# Points the default Claude Code session (~/.claude, no CLAUDE_CONFIG_DIR) at the
+# account held by a profile, so a bare `claude` runs as that account.
+#
+# Two halves move together: the Keychain credential, whose service name is
+# derived from the source directory, and the oauthAccount block in
+# .claude.json. Moving one without the other leaves the session claiming an
+# identity it has no token for.
+#
+
+set -euo pipefail
+
+PRIMARY="$HOME/.claude"
+PRIMARY_JSON="$HOME/.claude.json"
+
+list_profiles() {
+	local found=0
+	local dir tag
+
+	for dir in "$HOME"/.claude-*; do
+		[ -d "$dir" ] || continue
+		tag="$(basename "$dir")"
+		tag="${tag#.claude-}"
+		found=1
+		printf '  %-12s %s\n' "$tag" "$(account_label "$dir")"
+	done
+
+	if [ "$found" -eq 0 ]; then
+		echo "  (none — create one with: setup-claude-profile <tag>)"
+	fi
+}
+
+account_label() {
+	python3 - "$1" <<'PY'
+import json, os, pathlib, sys
+
+directory = pathlib.Path(sys.argv[1])
+home = pathlib.Path(os.path.expanduser("~"))
+path = home / ".claude.json" if directory == home / ".claude" else directory / ".claude.json"
+
+if not path.exists():
+    print("not logged in")
+    raise SystemExit
+
+try:
+    account = json.loads(path.read_text()).get("oauthAccount") or {}
+except (OSError, ValueError):
+    print("unreadable .claude.json")
+    raise SystemExit
+
+print(account.get("emailAddress") or "not logged in")
+PY
+}
+
+usage() {
+	cat <<-EOF
+		Usage: claude-select-account <tag-or-path>
+
+		Makes a config directory use the account held by another one. The target
+		defaults to ~/.claude, the bare \`claude\` login; --target names another.
+
+		Available tags are:
+	EOF
+	list_profiles
+	cat <<-EOF
+
+		  claude-select-account a
+		  claude-select-account ~/.claude-work
+		  claude-select-account a --target ~/.claude-b
+
+		Current default account: $(account_label "$PRIMARY")
+	EOF
+
+	if [ -n "${CLAUDE_CONFIG_DIR:-}" ] && [ "${CLAUDE_CONFIG_DIR%/}" != "$PRIMARY" ]; then
+		cat <<-EOF
+
+			This session runs from ${CLAUDE_CONFIG_DIR%/} ($(account_label "${CLAUDE_CONFIG_DIR%/}")),
+			so --target is required.
+		EOF
+	fi
+}
+
+if [ $# -eq 0 ]; then
+	usage
+	exit 0
+fi
+
+# A path (absolute, ~-prefixed, or containing a slash) is used verbatim;
+# anything else names a ~/.claude-<tag> directory.
+resolve_dir() {
+	local spec="$1" dir
+	case "$spec" in
+		/*|"~"/*|*/*) dir="${spec/#\~/$HOME}" ;;
+		*) dir="$HOME/.claude-$spec" ;;
+	esac
+	printf '%s' "${dir%/}"
+}
+
+SPEC=""
+TARGET_SPEC=""
+
+while [ $# -gt 0 ]; do
+	case "$1" in
+		-h|--help) usage; exit 0 ;;
+		--target) TARGET_SPEC="${2:-}"; shift 2 ;;
+		--target=*) TARGET_SPEC="${1#--target=}"; shift ;;
+		-*) echo "Unknown option: $1" >&2; exit 1 ;;
+		*)
+			if [ -n "$SPEC" ]; then
+				echo "Unexpected argument: $1" >&2
+				exit 1
+			fi
+			SPEC="$1"; shift ;;
+	esac
+done
+
+if [ -z "$SPEC" ]; then
+	usage
+	exit 0
+fi
+
+SRC_DIR="$(resolve_dir "$SPEC")"
+
+if [ ! -d "$SRC_DIR" ]; then
+	echo "Error: $SRC_DIR does not exist." >&2
+	echo >&2
+	echo "Available tags are:" >&2
+	list_profiles >&2
+	exit 1
+fi
+
+# The config directory of the session running this script, when there is one.
+INVOKING_DIR=""
+if [ -n "${CLAUDE_CONFIG_DIR:-}" ]; then
+	INVOKING_DIR="$(resolve_dir "$CLAUDE_CONFIG_DIR")"
+fi
+
+if [ -n "$TARGET_SPEC" ]; then
+	DEST_DIR="$(resolve_dir "$TARGET_SPEC")"
+	if [ ! -d "$DEST_DIR" ]; then
+		echo "Error: target $DEST_DIR does not exist." >&2
+		exit 1
+	fi
+elif [ -n "$INVOKING_DIR" ] && [ "$INVOKING_DIR" != "$PRIMARY" ]; then
+	# Invoked from a profile session: which account to change is ambiguous, so
+	# the caller must say.
+	cat >&2 <<-EOF
+		Error: this session runs from a non-default config directory, so the target is ambiguous.
+
+		  This session:     $INVOKING_DIR ($(account_label "$INVOKING_DIR"))
+		  Default session:  $PRIMARY ($(account_label "$PRIMARY"))
+
+		Name the one to change:
+
+		  claude-select-account $SPEC --target "$PRIMARY"
+		      changes the bare \`claude\` login
+
+		  claude-select-account $SPEC --target "$INVOKING_DIR"
+		      changes this session's own login
+	EOF
+	exit 1
+else
+	DEST_DIR="$PRIMARY"
+fi
+
+if [ "$SRC_DIR" = "$DEST_DIR" ]; then
+	echo "Error: source and target are the same directory ($SRC_DIR)." >&2
+	exit 1
+fi
+
+if [ "$SRC_DIR" = "$PRIMARY" ] && [ -z "$TARGET_SPEC" ]; then
+	echo "Error: $PRIMARY is the default session, not a profile." >&2
+	exit 1
+fi
+
+# The default directory uses the unsuffixed service name; every other config
+# directory appends a hash of its own path.
+service_name_for() {
+	if [ "$1" = "$PRIMARY" ]; then
+		printf 'Claude Code-credentials'
+		return
+	fi
+	python3 -c '
+import hashlib, sys, unicodedata
+d = unicodedata.normalize("NFC", sys.argv[1])
+print("Claude Code-credentials-" + hashlib.sha256(d.encode("utf-8")).hexdigest()[:8])
+' "$1"
+}
+
+SRC_SERVICE="$(service_name_for "$SRC_DIR")"
+DEST_SERVICE="$(service_name_for "$DEST_DIR")"
+ACCT="$USER"
+
+if ! security find-generic-password -s "$SRC_SERVICE" -a "$ACCT" >/dev/null 2>&1; then
+	echo "Error: $SRC_DIR has no stored login." >&2
+	echo "Sign in there first:  CLAUDE_CONFIG_DIR=$SRC_DIR claude /login" >&2
+	exit 1
+fi
+
+CURRENT="$(account_label "$DEST_DIR")"
+INCOMING="$(account_label "$SRC_DIR")"
+
+if [ "$DEST_DIR" = "$PRIMARY" ]; then
+	DEST_LABEL="Default session ($PRIMARY)"
+elif [ -n "$INVOKING_DIR" ] && [ "$DEST_DIR" = "$INVOKING_DIR" ]; then
+	DEST_LABEL="This session ($DEST_DIR)"
+else
+	DEST_LABEL="$DEST_DIR"
+fi
+
+echo "$DEST_LABEL: $CURRENT -> $INCOMING"
+
+# The outgoing credential is preserved only if another directory already holds
+# it; otherwise switching away would strand that account's token.
+if [ "$CURRENT" != "not logged in" ]; then
+	PRESERVED=0
+	for dir in "$PRIMARY" "$HOME"/.claude-*; do
+		[ -d "$dir" ] || continue
+		[ "$dir" = "$DEST_DIR" ] && continue
+		if [ "$(account_label "$dir")" = "$CURRENT" ]; then
+			PRESERVED=1
+			break
+		fi
+	done
+	if [ "$PRESERVED" -eq 0 ]; then
+		echo
+		echo "Warning: no profile holds $CURRENT, so its login is replaced here and not"
+		echo "kept anywhere. Preserve it first with:  claude-copy-login <newtag>"
+		if [ -t 0 ]; then
+			printf 'Continue anyway? [y/N] '
+			read -r reply
+			case "$reply" in
+				[yY]|[yY][eE][sS]) ;;
+				*) echo "Canceled."; exit 0 ;;
+			esac
+		else
+			echo "Refusing to discard it non-interactively." >&2
+			exit 1
+		fi
+	fi
+fi
+
+# -X takes the secret hex-encoded so the credential JSON needs no shell
+# quoting; a bare -w prompts interactively rather than reading stdin, and
+# `security -i` wraps the ~4KB hex across lines and misreads the remainder.
+python3 - "$SRC_SERVICE" "$DEST_SERVICE" "$ACCT" <<'PY'
+import subprocess, sys
+
+src_service, dest_service, acct = sys.argv[1], sys.argv[2], sys.argv[3]
+
+read = subprocess.run(
+    ["security", "find-generic-password", "-s", src_service, "-a", acct, "-w"],
+    capture_output=True,
+)
+if read.returncode != 0:
+    sys.exit("could not read the profile credential")
+
+secret = read.stdout.rstrip(b"\n")
+if not secret:
+    sys.exit("the profile credential is empty")
+
+write = subprocess.run(
+    [
+        "security", "add-generic-password",
+        "-U",
+        "-a", acct,
+        "-s", dest_service,
+        "-D", "application password",
+        "-X", secret.hex(),
+    ],
+    capture_output=True,
+)
+if write.returncode != 0:
+    sys.exit("keychain write failed: " + write.stderr.decode().strip())
+PY
+
+# The default directory keeps .claude.json at ~/.claude.json; every other keeps
+# it inside the directory.
+json_path_for() {
+	if [ "$1" = "$PRIMARY" ]; then
+		printf '%s' "$PRIMARY_JSON"
+	else
+		printf '%s' "$1/.claude.json"
+	fi
+}
+
+SRC_JSON="$(json_path_for "$SRC_DIR")"
+DEST_JSON="$(json_path_for "$DEST_DIR")"
+
+if [ -f "$SRC_JSON" ]; then
+	python3 - "$SRC_JSON" "$DEST_JSON" <<'PY'
+import json, os, shutil, sys, tempfile
+
+src_path, dest_path = sys.argv[1], sys.argv[2]
+
+with open(src_path) as fh:
+    src = json.load(fh)
+
+dest = {}
+if os.path.exists(dest_path):
+    with open(dest_path) as fh:
+        dest = json.load(fh)
+    shutil.copy2(dest_path, dest_path + ".pre-account-switch")
+
+# Identity only. Project history, MCP servers, and UI state belong to the
+# target directory and survive the switch.
+carry = [
+    "oauthAccount",
+    "hasCompletedOnboarding",
+    "lastOnboardingVersion",
+    "subscriptionNoticeCount",
+    "hasAvailableSubscription",
+]
+for key in carry:
+    if key in src:
+        dest[key] = src[key]
+    else:
+        dest.pop(key, None)
+
+directory = os.path.dirname(os.path.abspath(dest_path)) or "."
+handle, temp_path = tempfile.mkstemp(dir=directory, prefix=".claude.json.")
+try:
+    with os.fdopen(handle, "w") as fh:
+        json.dump(dest, fh, indent=2)
+    os.chmod(temp_path, 0o600)
+    os.replace(temp_path, dest_path)
+except BaseException:
+    os.unlink(temp_path)
+    raise
+PY
+fi
+
+echo
+
+if [ "$DEST_DIR" = "$PRIMARY" ]; then
+	echo "Done. A bare \`claude\` now runs as $INCOMING."
+	echo "Verify with:  claude -p 'Reply with exactly: VERIFIED'"
+else
+	echo "Done. $DEST_DIR now runs as $INCOMING."
+	echo "Verify with:  CLAUDE_CONFIG_DIR=$DEST_DIR claude -p 'Reply with exactly: VERIFIED'"
+fi
+
+# A running session holds the credential it started with.
+if [ -n "$INVOKING_DIR" ] && [ "$DEST_DIR" = "$INVOKING_DIR" ]; then
+	echo
+	echo "This session keeps its current account until restarted."
+fi
