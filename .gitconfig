@@ -73,7 +73,7 @@
 [diff "localizablestrings"]
 	textconv = "iconv -f utf-16 -t utf-8"
 [push]
-	default = matching
+	default = simple
 [advice]
 	pushNonFastForward = false
 	statusHints = false
@@ -98,5 +98,6 @@
 # Git Delta https://github.com/dandavison/delta
 [core]
     pager = delta
+	hooksPath = /Users/fbarthelemy/.icloud-drive/dotfiles/git-hooks
 [delta]
     syntax-theme = GitHub
