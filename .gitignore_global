@@ -6,7 +6,7 @@ vendor/FBMemCache/
 
 # Logs and databases #
 ######################
-*.log
+#*.log
 *.sqlite
 
 # OS generated files #
@@ -18,4 +18,3 @@ vendor/FBMemCache/
 .Trashes
 ehthumbs.db
 Thumbs.db
-
