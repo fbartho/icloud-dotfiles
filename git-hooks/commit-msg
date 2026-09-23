@@ -1,22 +1,71 @@
 #!/bin/sh
-# Rejects commit messages carrying AI-attribution boilerplate (Co-Authored-By
-# trailers, "Generated with Claude" footers, etc). The pattern list lives in
+# Strips AI-attribution boilerplate (Co-Authored-By trailers, "Generated with
+# Claude" footers, etc) from the commit message, or rejects the commit when
+# ATTRIBUTION_GUARD_MODE=reject. The pattern list lives in
 # attribution-patterns.sh so every consumer (this hook, the Claude Code
 # PreToolUse guard) reads the same source.
 
-HOOK_DIR=$(CDPATH= cd -- "$(dirname "$0")" && pwd)
+HOOK_DIR=$(CDPATH='' cd -- "$(dirname "$0")" && pwd)
 # shellcheck source=./attribution-patterns.sh
 . "$HOOK_DIR/attribution-patterns.sh"
 
 MSG_FILE="$1"
 
-if result=$(attribution_scan "$MSG_FILE"); then
-	pattern=$(printf '%s' "$result" | cut -d'|' -f1)
-	line=$(printf '%s' "$result" | cut -d'|' -f2-)
-	echo "commit-msg: rejected — AI attribution boilerplate matched pattern '$pattern'" >&2
-	echo "commit-msg: offending line: $line" >&2
-	exit 1
+# Deletes matching non-comment lines above the scissors line, then drops the
+# blank lines left trailing the message.
+strip_message() {
+	msg_file="$1"
+	end=$(grep -n -x -e '# ------------------------ >8 ------------------------' "$msg_file" | head -1 | cut -d: -f1)
+	[ -n "$end" ] || end=$(($(wc -l <"$msg_file") + 2))
+
+	hits=$(mktemp)
+	while IFS= read -r pattern; do
+		[ -z "$pattern" ] && continue
+		awk -v e="$end" 'NR < e' "$msg_file" | grep -niE -e "$pattern" \
+			| while IFS= read -r hit; do
+				num=${hit%%:*}
+				text=${hit#*:}
+				case "$text" in '#'*) continue ;; esac
+				grep -q "^$num	" "$hits" \
+					|| printf '%s\t%s\t%s\n' "$num" "$pattern" "$text" >>"$hits"
+			done
+	done <<EOF
+$ATTRIBUTION_PATTERNS
+EOF
+
+	if [ ! -s "$hits" ]; then
+		rm -f "$hits"
+		return 0
+	fi
+
+	rewritten=$(mktemp)
+	awk -v e="$end" -v dels="$(cut -f1 "$hits" | tr '\n' ' ')" '
+		BEGIN { n = split(dels, d, " "); for (i = 1; i <= n; i++) del[d[i]] = 1 }
+		NR >= e { buf = ""; print; next }
+		NR in del { next }
+		/^[[:space:]]*$/ { buf = buf $0 "\n"; next }
+		{ printf "%s", buf; buf = ""; print }
+	' "$msg_file" >"$rewritten" && cat "$rewritten" >"$msg_file"
+	rm -f "$rewritten"
+
+	while IFS='	' read -r _ pattern text; do
+		echo "commit-msg: stripped AI attribution line: $text" >&2
+		attribution_log commit-msg "$pattern"
+	done <"$hits"
+	rm -f "$hits"
+}
+
+if [ "$ATTRIBUTION_MODE" = reject ]; then
+	if result=$(attribution_scan "$MSG_FILE"); then
+		pattern=$(printf '%s' "$result" | cut -d'|' -f1)
+		line=$(printf '%s' "$result" | cut -d'|' -f2-)
+		echo "commit-msg: rejected — AI attribution boilerplate matched pattern '$pattern'" >&2
+		echo "commit-msg: offending line: $line" >&2
+		exit 1
+	fi
+else
+	strip_message "$MSG_FILE"
 fi
 
 HOOK_NAME=commit-msg
-. "$HOOK_DIR/_delegate.sh" "$@"
+. "$HOOK_DIR/_delegate.sh"
