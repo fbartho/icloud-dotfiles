@@ -9,7 +9,7 @@ case ":$PATH:" in
 	*) export PATH="$CARGO_HOME/bin:$PATH" ;;
 esac
 
-# sccache; bin/sccache-server runs the server under launchd with these settings.
+# sccache; bin/setup-shell-symlinks copies these into the launchd plist, so rerun it after a change.
 export SCCACHE_DIR="$HOME/.cache/sccache"
 export SCCACHE_CACHE_SIZE=20G
 export SCCACHE_IDLE_TIMEOUT=0

@@ -35,6 +35,84 @@ link_file() {
     fi
 }
 
+xml_escape() {
+    local s="$1"
+    s="${s//&/&amp;}"
+    s="${s//</&lt;}"
+    s="${s//>/&gt;}"
+    printf '%s' "$s"
+}
+
+# launchd cannot read iCloud Drive, so the plist is a generated file holding
+# absolute paths and the sccache settings from .zshenv; rerun after changing them.
+write_sccache_plist() {
+    local dest="$HOME/Library/LaunchAgents/com.fbartho.sccache-server.plist"
+    local log="$HOME/Library/Logs/sccache-server.log"
+    local settings sccache dir size idle
+
+    settings="$(HOME="$HOME" zsh -fc 'source "$1" && print -r -- "$(command -v sccache)" && print -r -- "$SCCACHE_DIR" && print -r -- "$SCCACHE_CACHE_SIZE" && print -r -- "$SCCACHE_IDLE_TIMEOUT"' zsh "$DOTFILES_DIR/.zshenv")" || {
+        echo "⏭ $dest (could not read $DOTFILES_DIR/.zshenv)"
+        return 0
+    }
+    { read -r sccache; read -r dir; read -r size; read -r idle; } <<< "$settings"
+    if [ -z "$sccache" ]; then
+        echo "⏭ $dest (sccache not installed)"
+        return 0
+    fi
+
+    local tmp
+    tmp="$(mktemp)"
+    cat > "$tmp" <<EOF
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>com.fbartho.sccache-server</string>
+	<key>ProgramArguments</key>
+	<array>
+		<string>$(xml_escape "$sccache")</string>
+	</array>
+	<key>EnvironmentVariables</key>
+	<dict>
+		<key>SCCACHE_START_SERVER</key>
+		<string>1</string>
+		<key>SCCACHE_NO_DAEMON</key>
+		<string>1</string>
+		<key>SCCACHE_DIR</key>
+		<string>$(xml_escape "$dir")</string>
+		<key>SCCACHE_CACHE_SIZE</key>
+		<string>$(xml_escape "$size")</string>
+		<key>SCCACHE_IDLE_TIMEOUT</key>
+		<string>$(xml_escape "$idle")</string>
+	</dict>
+	<key>RunAtLoad</key>
+	<true/>
+	<key>KeepAlive</key>
+	<dict>
+		<key>SuccessfulExit</key>
+		<false/>
+	</dict>
+	<key>StandardOutPath</key>
+	<string>$(xml_escape "$log")</string>
+	<key>StandardErrorPath</key>
+	<string>$(xml_escape "$log")</string>
+</dict>
+</plist>
+EOF
+
+    if [ ! -L "$dest" ] && cmp -s "$tmp" "$dest"; then
+        rm "$tmp"
+        echo "✓ $dest (already current)"
+        return 0
+    fi
+    mkdir -p "$(dirname "$dest")"
+    rm -f "$dest"
+    mv "$tmp" "$dest"
+    chmod 644 "$dest"
+    echo "→ $dest (written; reload with launchctl bootout/bootstrap)"
+}
+
 echo "Setting up shell symlinks..."
 echo ""
 
@@ -87,7 +165,7 @@ link_file "$DOTFILES_DIR/config/pnpm/rc" "$HOME/Library/Preferences/pnpm/rc"
 # Launch agents
 echo ""
 echo "=== launchd ==="
-link_file "$DOTFILES_DIR/config/launchd/com.fbartho.sccache-server.plist" "$HOME/Library/LaunchAgents/com.fbartho.sccache-server.plist"
+write_sccache_plist
 
 echo ""
 echo "Done!"
