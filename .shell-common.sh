@@ -108,7 +108,9 @@ export PATH
 
 # GPG agent
 if [ -S ~/.gnupg/S.gpg-agent ]; then
-    [ -z "$AI_AGENT" ] && echo "[gpg-agent]: status is good."
+    case $- in
+        *i*) [ -z "$AI_AGENT" ] && echo "[gpg-agent]: status is good." ;;
+    esac
 else
     eval $(gpg-agent --daemon 2>/dev/null)
 fi
@@ -116,12 +118,14 @@ fi
 # Increase file descriptor limit
 ulimit -n 10000
 
-# Use default node version
-if [ -n "$AI_AGENT" ]; then
+# Use default node version (SwiftBar reads stdout of non-interactive `zsh -l`)
+case $- in *i*) _interactive=1 ;; *) _interactive= ;; esac
+if [ -n "$AI_AGENT" ] || [ -z "$_interactive" ]; then
     nvm use default --silent 2>/dev/null
 else
     nvm use default
 fi
+unset _interactive
 
 # Activate yarn berry
 command -v corepack >/dev/null 2>&1 && corepack enable 2>/dev/null

@@ -1,9 +1,9 @@
 #!/bin/sh
-# Strips AI-attribution boilerplate (Co-Authored-By trailers, "Generated with
-# Claude" footers, etc) from the commit message, or rejects the commit when
-# ATTRIBUTION_GUARD_MODE=reject. The pattern list lives in
-# attribution-patterns.sh so every consumer (this hook, the Claude Code
-# PreToolUse guard) reads the same source.
+# Checks the commit message against the two lists in attribution-patterns.sh,
+# which every consumer (this hook, the Claude Code PreToolUse guard) shares:
+# - Reject list (AI-company email domains): always rejects the commit.
+# - Strip list (Co-Authored-By trailers, "Generated with" footers, etc):
+#   strips matching lines, or rejects when ATTRIBUTION_GUARD_MODE=reject.
 
 HOOK_DIR=$(CDPATH='' cd -- "$(dirname "$0")" && pwd)
 # shellcheck source=./attribution-patterns.sh
@@ -55,10 +55,17 @@ EOF
 	rm -f "$hits"
 }
 
+if result=$(attribution_scan "$MSG_FILE" "$ATTRIBUTION_REJECT_PATTERNS"); then
+	line=$(printf '%s' "$result" | cut -f2-)
+	echo "commit-msg: rejected — offending line: $line" >&2
+	echo "commit-msg: remove the AI-company email address from the commit message." >&2
+	exit 1
+fi
+
 if [ "$ATTRIBUTION_MODE" = reject ]; then
-	if result=$(attribution_scan "$MSG_FILE"); then
-		pattern=$(printf '%s' "$result" | cut -d'|' -f1)
-		line=$(printf '%s' "$result" | cut -d'|' -f2-)
+	if result=$(attribution_scan "$MSG_FILE" "$ATTRIBUTION_PATTERNS"); then
+		pattern=$(printf '%s' "$result" | cut -f1)
+		line=$(printf '%s' "$result" | cut -f2-)
 		echo "commit-msg: rejected — AI attribution boilerplate matched pattern '$pattern'" >&2
 		echo "commit-msg: offending line: $line" >&2
 		exit 1

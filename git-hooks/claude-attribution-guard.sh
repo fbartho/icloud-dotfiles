@@ -1,7 +1,9 @@
 #!/bin/sh
 # PreToolUse guard for Bash calls to git commit / gh pr / gh issue.
 # - --no-verify is always blocked (exit 2): it skips the commit-msg hook.
-# - AI-attribution text is removed from the command and returned as
+# - git commit text matching the reject list in attribution-patterns.sh (AI-
+#   company email domains) is always blocked (exit 2). gh commands skip it.
+# - Text matching the strip list is removed from the command and returned as
 #   hookSpecificOutput.updatedInput, leaving the permission flow untouched.
 #   With ATTRIBUTION_GUARD_MODE=reject, a match blocks the command (exit 2).
 # git commit is rewritten here too: a repo with its own core.hooksPath never
@@ -42,18 +44,48 @@ TMP_CMD=$(mktemp)
 trap 'rm -f "$TMP_CMD" "$TMP_CMD.new"' EXIT
 printf '%s' "$COMMAND" >"$TMP_CMD"
 
+case "$COMMAND" in
+*"git commit"*)
+	while IFS= read -r pattern; do
+		[ -z "$pattern" ] && continue
+		grep -qiE -e "$pattern" "$TMP_CMD" || continue
+		echo "blocked: git commit text carries an AI-company email address matching '$pattern'; remove the address" >&2
+		exit 2
+	done <<EOF
+$ATTRIBUTION_REJECT_PATTERNS
+EOF
+	;;
+esac
+
 while IFS= read -r pattern; do
 	[ -z "$pattern" ] && continue
-	grep -qiE -e "$pattern" "$TMP_CMD" || continue
+	# Removes the match through end of line, stopping at a quote so the
+	# closing quote of a -m/--body argument on the footer line survives.
+	# Leading punctuation, whitespace, and emoji before the match go with it.
+	# A ^ pattern also matches just after a quote, and a $ pattern just before
+	# one; the quote is kept.
+	sed_pattern=$(printf '%s' "$pattern" | sed 's|/|\\/|g')
+	case "$pattern" in
+	'^'*)
+		match_pattern="(^|[\"'])${pattern#^}"
+		sed_expr="s/(^|[\"'])(${sed_pattern#^})[^\"']*/\\1/Ig"
+		;;
+	*'$')
+		body=${sed_pattern%\$}
+		match_pattern="${pattern%\$}([\"']|\$)"
+		sed_expr="s/[^[:alnum:]\"']*(${body})\"/\"/Ig;s/[^[:alnum:]\"']*(${body})'/'/Ig;s/[^[:alnum:]\"']*(${body})\$//Ig"
+		;;
+	*)
+		match_pattern=$pattern
+		sed_expr="s/[^[:alnum:]\"']*(${sed_pattern})[^\"']*//Ig"
+		;;
+	esac
+	grep -qiE -e "$match_pattern" "$TMP_CMD" || continue
 	if [ "$ATTRIBUTION_MODE" = reject ]; then
 		echo "blocked: command text matches AI-attribution pattern '$pattern'" >&2
 		exit 2
 	fi
-	# Removes the match through end of line, stopping at a quote so the
-	# closing quote of a -m/--body argument on the footer line survives.
-	# Leading punctuation, whitespace, and emoji before the match go with it.
-	sed_pattern=$(printf '%s' "$pattern" | sed 's|/|\\/|g')
-	sed -E "s/[^[:alnum:]\"']*(${sed_pattern})[^\"']*//Ig" "$TMP_CMD" >"$TMP_CMD.new" \
+	sed -E "$sed_expr" "$TMP_CMD" >"$TMP_CMD.new" \
 		&& cat "$TMP_CMD.new" >"$TMP_CMD"
 	attribution_log pretooluse "$pattern"
 done <<EOF
