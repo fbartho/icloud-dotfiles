@@ -66,8 +66,8 @@ if command -v pyenv >/dev/null 2>&1; then
     eval "$(pyenv init -)"
 fi
 
-# Rust/Cargo
-[ -f "$HOME/.cargo/env" ] && . "$HOME/.cargo/env"
+# Rust, sccache, and JavaScript caches: zsh has already read .zshenv; bash never does
+[ -z "$ZSH_VERSION" ] && [ -f "$HOME/.zshenv" ] && . "$HOME/.zshenv"
 
 # Espressif Xtensa Rust toolchain (espup): on-demand, because the export sets LIBCLANG_PATH globally
 export ESPUP_EXPORT_FILE="$HOME/.config/espup/export-esp.sh"
@@ -124,7 +124,7 @@ else
 fi
 
 # Activate yarn berry
-corepack enable 2>/dev/null
+command -v corepack >/dev/null 2>&1 && corepack enable 2>/dev/null
 
 # Load aliases
 [ -f "$HOME/.aliases.sh" ] && . "$HOME/.aliases.sh"

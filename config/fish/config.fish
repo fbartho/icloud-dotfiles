@@ -21,11 +21,32 @@ set -l _shell_prompts \
     '👾' '🤖' '👻' '🎃' '🍕' '🌮'
 set -gx SHELL_EMOJI $_shell_prompts[(random 1 (count $_shell_prompts))]
 
+# Rust, sccache, and JavaScript caches: a translation of .zshenv, ahead of the agent early return
+set -gx CARGO_HOME "$HOME/.cargo"
+set -gx RUSTUP_HOME "$HOME/.rustup"
+set -gx SCCACHE_DIR "$HOME/.cache/sccache"
+set -gx SCCACHE_CACHE_SIZE 20G
+set -gx SCCACHE_IDLE_TIMEOUT 0
+# An absolute path, since Homebrew is not yet on PATH here. A RUSTC_WRAPPER the caller sets, even to empty, is kept.
+if not set -q RUSTC_WRAPPER
+    for _sccache in "$CARGO_HOME/bin/sccache" /opt/homebrew/bin/sccache /usr/local/bin/sccache (command -s sccache)
+        if test -x "$_sccache"
+            set -gx RUSTC_WRAPPER "$_sccache"
+            break
+        end
+    end
+    set -e _sccache
+end
+set -gx npm_config_cache "$HOME/.cache/js/npm"
+set -gx BUN_INSTALL_CACHE_DIR "$HOME/.cache/js/bun"
+set -gx pnpm_config_store_dir "$HOME/.cache/js/pnpm/store"
+set -gx pnpm_config_cache_dir "$HOME/.cache/js/pnpm/cache"
+
 # Minimal setup for AI agents
 if set -q AI_AGENT
     # Use node silently
     nvm use default --silent 2>/dev/null
-    command corepack enable &>/dev/null
+    command -q corepack; and command corepack enable &>/dev/null
     # Simple prompt
     function fish_prompt
         echo '$ '
@@ -65,11 +86,7 @@ if command -v pyenv >/dev/null 2>&1
 end
 
 # Rust/Cargo
-if test -f "$HOME/.cargo/env.fish"
-    source "$HOME/.cargo/env.fish"
-else if test -d "$HOME/.cargo/bin"
-    fish_add_path "$HOME/.cargo/bin"
-end
+fish_add_path "$CARGO_HOME/bin"
 
 # Espressif Xtensa Rust toolchain (espup): on-demand; the export file is sh syntax, so evaluate it in sh
 set -gx ESPUP_EXPORT_FILE "$HOME/.config/espup/export-esp.sh"
