@@ -48,6 +48,7 @@ link_file "$DOTFILES_DIR/.aliases.nu" "$HOME/.aliases.nu"
 # Zsh config files
 echo ""
 echo "=== Zsh ==="
+link_file "$DOTFILES_DIR/.zshenv" "$HOME/.zshenv"
 link_file "$DOTFILES_DIR/.zprofile" "$HOME/.zprofile"
 link_file "$DOTFILES_DIR/.zshrc" "$HOME/.zshrc"
 link_file "$DOTFILES_DIR/.zsh_plugins.txt" "$HOME/.zsh_plugins.txt"
@@ -71,6 +72,22 @@ link_file "$DOTFILES_DIR/config/starship.toml" "$HOME/.config/starship.toml"
 echo ""
 echo "=== Ghostty ==="
 link_file "$DOTFILES_DIR/config/ghostty" "$HOME/.config/ghostty"
+
+# JavaScript package managers
+echo ""
+echo "=== JavaScript ==="
+link_file "$DOTFILES_DIR/config/nvm/default-packages" "${NVM_DIR:-$HOME/.nvm}/default-packages"
+link_file "$DOTFILES_DIR/.yarnrc" "$HOME/.yarnrc"
+link_file "$DOTFILES_DIR/.yarnrc.yml" "$HOME/.yarnrc.yml"
+# pnpm reads $XDG_CONFIG_HOME/pnpm/rc, or the Library path when XDG_CONFIG_HOME is unset
+mkdir -p "$HOME/.config/pnpm" "$HOME/Library/Preferences/pnpm"
+link_file "$DOTFILES_DIR/config/pnpm/rc" "$HOME/.config/pnpm/rc"
+link_file "$DOTFILES_DIR/config/pnpm/rc" "$HOME/Library/Preferences/pnpm/rc"
+
+# Launch agents
+echo ""
+echo "=== launchd ==="
+link_file "$DOTFILES_DIR/config/launchd/com.fbartho.sccache-server.plist" "$HOME/Library/LaunchAgents/com.fbartho.sccache-server.plist"
 
 echo ""
 echo "Done!"

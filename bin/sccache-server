@@ -1,0 +1,22 @@
+#!/bin/zsh -f
+#
+# sccache-server
+# Runs the sccache server in the foreground for the launchd agent in
+# config/launchd/com.fbartho.sccache-server.plist. All settings come from .zshenv.
+#
+
+source "${0:A:h:h}/.zshenv"
+
+if [[ -z "$RUSTC_WRAPPER" ]]; then
+	echo "sccache-server: sccache is not installed" >&2
+	# A clean exit stops launchd from restarting the job.
+	exit 0
+fi
+
+# A server another client auto-started holds the port; take over once it exits.
+port="${SCCACHE_SERVER_PORT:-4226}"
+while /usr/bin/nc -z 127.0.0.1 "$port" 2>/dev/null; do
+	sleep 60
+done
+
+SCCACHE_START_SERVER=1 SCCACHE_NO_DAEMON=1 exec "$RUSTC_WRAPPER"
